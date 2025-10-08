@@ -2,7 +2,7 @@
 //  RentenKonstanten.swift
 //  RentenRechner
 //
-//  Zeitlose Konstanten und Tabellen für die Rentenberechnung (regelbasiert)
+//  Zeitlose Konstanten und Tabellen für die Rentenberechnung
 //
 
 import Foundation
