@@ -13,9 +13,8 @@ class Person {
     var id: UUID
     var geschlecht: Geschlecht
     
-    // Private Backing-Properties für Datumsnormalisierung
+    // Private Backing-Property für Datumsnormalisierung
     private var _geburtsdatum: Date
-    private var _gewuenschterRentenbeginn: Date?
     
     var monatlichesEinkommen: Double
     var aktuelleRentenpunkte: Double
@@ -35,29 +34,15 @@ class Person {
         }
     }
     
-    var gewuenschterRentenbeginn: Date? {
-        get {
-            guard let d = _gewuenschterRentenbeginn else { return nil }
-            return DateHelper.mitternachtStabil(fuer: d)
-        }
-        set {
-            if let nv = newValue {
-                _gewuenschterRentenbeginn = DateHelper.mitternachtStabil(fuer: nv)
-            } else {
-                _gewuenschterRentenbeginn = nil
-            }
-        }
-    }
-    
+    // Init ohne gewuenschterRentenbeginn
     init() {
         self.id = UUID()
         self.geschlecht = .maennlich
-        let defaultDate = DateHelper.stableCalendar.date(from: DateComponents(year: 1980, month: 1, day: 1)) ?? Date()
+        let defaultDate = DateHelper.stableCalendar.date(from: DateComponents(year: 1970, month: 1, day: 1)) ?? Date()
         self._geburtsdatum = DateHelper.mitternachtStabil(fuer: defaultDate)
         self.monatlichesEinkommen = 0.0
         self.aktuelleRentenpunkte = 0.0
         self.aktuelleRente = nil
-        self._gewuenschterRentenbeginn = nil
         self.zusatzrente1 = 0.0
         self.zusatzrente2 = 0.0
     }
@@ -68,7 +53,6 @@ class Person {
         monatlichesEinkommen: Double = 0.0,
         aktuelleRentenpunkte: Double = 0.0,
         aktuelleRente: Double? = nil,
-        gewuenschterRentenbeginn: Date? = nil,
         zusatzrente1: Double = 0.0,
         zusatzrente2: Double = 0.0
     ) {
@@ -78,11 +62,6 @@ class Person {
         self.monatlichesEinkommen = monatlichesEinkommen
         self.aktuelleRentenpunkte = aktuelleRentenpunkte
         self.aktuelleRente = aktuelleRente
-        if let rb = gewuenschterRentenbeginn {
-            self._gewuenschterRentenbeginn = DateHelper.mitternachtStabil(fuer: rb)
-        } else {
-            self._gewuenschterRentenbeginn = nil
-        }
         self.zusatzrente1 = zusatzrente1
         self.zusatzrente2 = zusatzrente2
     }
@@ -153,10 +132,10 @@ extension Person {
     }
     
     var isRentenbeginnValid: Bool {
-        guard let rentenbeginn = gewuenschterRentenbeginn else { return true }
-        let cal = DateHelper.stableCalendar
-        let age60 = cal.date(byAdding: .year, value: 60, to: geburtsdatum) ?? Date()
-        return rentenbeginn >= DateHelper.mitternachtStabil(fuer: age60)
+        // Hier muss die Prüfung auf den Rentenbeginn aus AppSettings erfolgen,
+        // also diese Validierung ggf. im ViewModel oder an anderer Stelle machen.
+        // Hier geben wir true zurück, da Person das nicht mehr kennt.
+        return true
     }
     
     var isZusatzrentenValid: Bool {

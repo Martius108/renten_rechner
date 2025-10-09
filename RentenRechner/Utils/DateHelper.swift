@@ -194,7 +194,10 @@ class DateHelper {
         var comps = DateComponents()
         comps.year = jahre
         comps.month = monate
-        return stableCalendar.date(byAdding: comps, to: normalized)
+        if let result = stableCalendar.date(byAdding: comps, to: normalized) {
+            return mitternachtStabil(fuer: result)
+        }
+        return nil
     }
 
     static func erstelleDatum(jahr: Int, monat: Int, tag: Int) -> Date? {

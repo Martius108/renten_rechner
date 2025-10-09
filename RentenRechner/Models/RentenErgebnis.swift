@@ -168,11 +168,9 @@ extension RentenErgebnis {
 // MARK: - Szenario Vergleiche
 extension RentenErgebnis {
     func vergleichSzenario(neuerRentenbeginn: Date, person: Person, calculator: RentenCalculator) -> RentenErgebnis {
-        // Sicherstellen, dass Person als Werttyp kopiert wird und nur das Datum geändert wird
-        let temp = person
-        temp.gewuenschterRentenbeginn = neuerRentenbeginn
-        // Falls der Calculator AppSettings benötigt, ist er dafür zuständig.
-        return calculator.berechneRente(fuer: temp)
+        let tempSettings = calculator.appSettings.copy()
+        tempSettings.abweichenderRentenbeginn = neuerRentenbeginn
+        return calculator.berechneRente(fuer: person, appSettings: tempSettings)
     }
     
     func unterschiedZu(_ anderes: RentenErgebnis) -> RentenVergleich {

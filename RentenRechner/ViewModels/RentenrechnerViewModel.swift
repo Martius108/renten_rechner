@@ -25,6 +25,7 @@ class RentenrechnerViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var fehlerMeldung: String?
     @Published var showingError = false
+    @Published var appSettings: AppSettings? = nil
     
     // UI State
     @Published var fruehererRentenbeginnGewuenscht = false
@@ -40,7 +41,6 @@ class RentenrechnerViewModel: ObservableObject {
     // MARK: - Private Properties
     
     private var calculator: RentenCalculator
-    var appSettings: AppSettings?
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Public read-only accessor for Views
@@ -48,12 +48,28 @@ class RentenrechnerViewModel: ObservableObject {
         appSettings ?? AppSettings()
     }
     
+    // MARK: - Hilfs-Property für aktuellen wirksamen Rentenbeginn
+    
+    var aktuellerRentenbeginn: Date {
+        guard fruehererRentenbeginnGewuenscht, let settings = appSettings,
+              let rentenbeginn = settings.abweichenderRentenbeginn else {
+            return getRegelaltersgrenze()
+        }
+        return rentenbeginn
+    }
+    
     // MARK: - Initialization
     
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext
         
-        // Lade AppSettings aus SwiftData
+        // Initialisiere person mit einem Default-Wert, damit self vollständig initialisiert ist
+        self.person = Person()
+        
+        // Initialisiere calculator mit nil, wird später aktualisiert
+        self.calculator = RentenCalculator(appSettings: nil)
+        
+        // Jetzt kannst du self.appSettings sicher verwenden
         if let context = modelContext {
             let settingsDescriptor = FetchDescriptor<AppSettings>()
             let savedSettings = try? context.fetch(settingsDescriptor)
@@ -65,26 +81,17 @@ class RentenrechnerViewModel: ObservableObject {
                 try? context.save()
                 self.appSettings = newSettings
             }
-        }
-        
-        // Initialisiere Calculator
-        self.calculator = RentenCalculator(appSettings: self.appSettings)
-        
-        // Person laden/erstellen
-        if let context = modelContext {
+            
+            // Aktualisiere calculator mit geladenen appSettings
+            self.calculator = RentenCalculator(appSettings: self.appSettings)
+            
+            // Person laden/ersetzen, falls vorhanden
             let descriptor = FetchDescriptor<Person>()
             let savedPersons = try? context.fetch(descriptor)
             if let savedPerson = savedPersons?.first {
                 self.person = savedPerson
                 self.person.geburtsdatum = DateHelper.mitternachtStabil(fuer: self.person.geburtsdatum)
-                if let rb = self.person.gewuenschterRentenbeginn {
-                    self.person.gewuenschterRentenbeginn = DateHelper.mitternachtStabil(fuer: rb)
-                }
-            } else {
-                self.person = Person()
             }
-        } else {
-            self.person = Person()
         }
         
         setupValidation()
@@ -149,14 +156,15 @@ class RentenrechnerViewModel: ObservableObject {
             .store(in: &cancellables)
         
         // Rentenbeginn Warnungen
-        Publishers.CombineLatest($person, $fruehererRentenbeginnGewuenscht)
-            .map { person, fruehererBeginn in
-                guard fruehererBeginn, let gewuenschterBeginn = person.gewuenschterRentenbeginn else {
+        Publishers.CombineLatest($fruehererRentenbeginnGewuenscht, $appSettings)
+            .map { [weak self] (fruehererBeginn, settings) -> String? in
+                guard let self = self, fruehererBeginn, let settings = settings,
+                      let rentenbeginn = settings.abweichenderRentenbeginn else {
                     return nil
                 }
                 let validierung = self.calculator.validiereRentenbeginn(
-                    datum: gewuenschterBeginn,
-                    geburtsdatum: person.geburtsdatum
+                    datum: rentenbeginn,
+                    geburtsdatum: self.person.geburtsdatum
                 )
                 return validierung.istGueltig ? validierung.warnung : "Ungültiger Rentenbeginn"
             }
@@ -172,14 +180,16 @@ class RentenrechnerViewModel: ObservableObject {
             .sink { [weak self] isOn in
                 guard let self = self else { return }
                 if isOn {
-                    if self.person.gewuenschterRentenbeginn == nil {
-                        let startwert = self.appSettings?.fruehesterAbschlagsfreierBeginn ?? Date()
+                    if let settings = self.appSettings, settings.abweichenderRentenbeginn == Date() {
+                        let startwert = settings.fruehesterAbschlagsfreierBeginn
                         print("[ViewModel] Setze Startwert für früheren Rentenbeginn: \(startwert)")
-                        self.person.gewuenschterRentenbeginn = DateHelper.mitternachtStabil(fuer: startwert)
+                        settings.abweichenderRentenbeginn = DateHelper.mitternachtStabil(fuer: startwert)
                     }
                 } else {
                     print("[ViewModel] Entferne früheren Rentenbeginn, Toggle aus")
-                    self.person.gewuenschterRentenbeginn = nil
+                    if let settings = self.appSettings {
+                        settings.abweichenderRentenbeginn = settings.regelaltersgrenze
+                    }
                 }
             }
             .store(in: &cancellables)
@@ -217,27 +227,18 @@ class RentenrechnerViewModel: ObservableObject {
         
         // Normalisieren
         person.geburtsdatum = DateHelper.mitternachtStabil(fuer: person.geburtsdatum)
-        if let rb = person.gewuenschterRentenbeginn {
-            person.gewuenschterRentenbeginn = DateHelper.mitternachtStabil(fuer: rb)
-        }
         savePersonData()
         
-        print("[ViewModel berechneRente] Aufruf mit gewuenschterRentenbeginn: \(String(describing: person.gewuenschterRentenbeginn))")
+        print("[ViewModel berechneRente] Aufruf mit abweichendem Rentenbeginn: \(String(describing: appSettings?.abweichenderRentenbeginn))")
         
         withAnimation { isLoading = true }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             guard let self = self else { return }
             
-            // Bestimme Rentenbeginn für Berechnung
-            let regelalter = self.getRegelaltersgrenze()
-            let rentenbeginn: Date? = self.fruehererRentenbeginnGewuenscht ? self.person.gewuenschterRentenbeginn : regelalter
-            
             let berechnetesErgebnis = self.calculator.berechneRente(
                 fuer: self.person,
-                appSettings: self.appSettings,
-                festeZeitwerte: nil,
-                gefrorenerRentenbeginn: rentenbeginn
+                appSettings: self.appSettings
             )
             
             print("[ViewModel berechneRente] Ergebnis: zusätzliche RP = \(berechnetesErgebnis.zusaetzlicheRentenpunkte)")
@@ -255,13 +256,9 @@ class RentenrechnerViewModel: ObservableObject {
         guard istEingabeGueltig else { return }
         
         person.geburtsdatum = DateHelper.mitternachtStabil(fuer: person.geburtsdatum)
-        if let rb = person.gewuenschterRentenbeginn {
-            person.gewuenschterRentenbeginn = DateHelper.mitternachtStabil(fuer: rb)
-        }
         
         let aktuellerPerson = person
         
-        // Szenarien weiterhin ohne Frozen-Ziel, da jedes Szenario eigenen RB hat
         let berechneteSzenarien = calculator.berechneSzenarien(fuer: aktuellerPerson)
         self.szenarien = berechneteSzenarien
     }
@@ -292,9 +289,6 @@ class RentenrechnerViewModel: ObservableObject {
     func savePersonData() {
         guard let context = modelContext else { return }
         person.geburtsdatum = DateHelper.mitternachtStabil(fuer: person.geburtsdatum)
-        if let rb = person.gewuenschterRentenbeginn {
-            person.gewuenschterRentenbeginn = DateHelper.mitternachtStabil(fuer: rb)
-        }
         do {
             context.insert(person)
             try context.save()
@@ -312,9 +306,6 @@ class RentenrechnerViewModel: ObservableObject {
             if let savedPerson = savedPersons.first {
                 self.person = savedPerson
                 self.person.geburtsdatum = DateHelper.mitternachtStabil(fuer: self.person.geburtsdatum)
-                if let rb = self.person.gewuenschterRentenbeginn {
-                    self.person.gewuenschterRentenbeginn = DateHelper.mitternachtStabil(fuer: rb)
-                }
             } else {
                 let newPerson = Person()
                 context.insert(newPerson)
@@ -498,8 +489,6 @@ extension RentenrechnerViewModel {
         person.monatlichesEinkommen = 5500.0
         person.aktuelleRentenpunkte = 32.8
         person.aktuelleRente = 1420.0
-        let testDate2 = Calendar.current.date(byAdding: .year, value: 15, to: Date())!
-        person.gewuenschterRentenbeginn = DateHelper.mitternachtStabil(fuer: testDate2)
         fruehererRentenbeginnGewuenscht = true
         savePersonData()
     }
