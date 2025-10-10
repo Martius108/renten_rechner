@@ -211,6 +211,12 @@ struct RentenoptionenSection: View {
                 
                 if hatUserRentenbeginnGeaendert {
                     VStack(alignment: .leading, spacing: 8) {
+                        if let appSettings = viewModel.appSettings {
+                                    let beginnDatum = appSettings.fruehesterAbschlagsfreierBeginn
+                                    Text("Frühester abschlagsfreier Beginn: \(beginnDatum.deutscheFormatierung)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                         
                         DatePicker(
                             "Gewünschter Rentenbeginn",
