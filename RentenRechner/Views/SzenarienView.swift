@@ -9,8 +9,6 @@ import SwiftUI
 
 struct SzenarienView: View {
     @EnvironmentObject var viewModel: RentenrechnerViewModel
-    @State private var selectedSzenario: RentenSzenario?
-    @State private var showingComparison = false
 
     private var zusatzInfo: String? {
         if let settings = viewModel.appSettings,
@@ -52,10 +50,6 @@ struct SzenarienView: View {
                                         zusatzrente: viewModel.person.gesamtZusatzrente,
                                         rank: index + 1,
                                         isBest: szenario.name == viewModel.getBestesSzenario()?.name,
-                                        onTap: {
-                                            selectedSzenario = szenario
-                                            showingComparison = true
-                                        },
                                         customTitle: "Aktuelle Berechnung",
                                         additionalInfo: zusatzInfo
                                     )
@@ -64,11 +58,7 @@ struct SzenarienView: View {
                                         szenario: szenario,
                                         zusatzrente: viewModel.person.gesamtZusatzrente,
                                         rank: index + 1,
-                                        isBest: szenario.name == viewModel.getBestesSzenario()?.name,
-                                        onTap: {
-                                            selectedSzenario = szenario
-                                            showingComparison = true
-                                        }
+                                        isBest: szenario.name == viewModel.getBestesSzenario()?.name
                                     )
                                 }
                             }
@@ -83,23 +73,6 @@ struct SzenarienView: View {
             }
             .navigationTitle("Szenarien")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                if !viewModel.szenarien.isEmpty {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Aktualisieren") {
-                            viewModel.berechneSzenarien()
-                        }
-                    }
-                }
-            }
-            .sheet(isPresented: $showingComparison) {
-                if let selectedSzenario = selectedSzenario {
-                    SzenarioDetailView(
-                        szenario: selectedSzenario,
-                        zusatzrente: viewModel.person.gesamtZusatzrente
-                    )
-                }
-            }
         }
     }
 
@@ -176,92 +149,88 @@ struct SzenarioCard: View {
     let zusatzrente: Double
     let rank: Int
     let isBest: Bool
-    let onTap: () -> Void
 
     // Optionale Parameter für individuellen Titel und Zusatzinfo
     var customTitle: String? = nil
     var additionalInfo: String? = nil
 
     var body: some View {
-        Button(action: onTap) {
-            GroupBox {
-                VStack(alignment: .leading, spacing: 16) {
-                    // Header mit Rang und Empfehlung
-                    HStack {
-                        HStack(spacing: 8) {
-                            Text("#\(rank)")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(rankColor)
-                                .clipShape(Capsule())
-
-                            if isBest {
-                                //Image(systemName: "crown.fill")
-                                    //.foregroundColor(.yellow)
-                            }
-
-                            Text(customTitle ?? szenario.name)
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                        }
-
-                        Spacer()
-                    }
-
-                    // Beschreibung oder Zusatzinfo anzeigen
-                    if customTitle == "Aktuelle Berechnung", let info = additionalInfo {
-                        Text(info)
+        GroupBox {
+            VStack(alignment: .leading, spacing: 16) {
+                // Header mit Rang und Empfehlung
+                HStack {
+                    HStack(spacing: 8) {
+                        Text("#\(rank)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.leading)
-                    } else {
-                        Text(szenario.beschreibung)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.leading)
-                    }
-
-                    // Hauptergebnis
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Monatliche Rente (gesetzlich)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: szenario.ergebnis.tatsaechlicheBruttoRente)) ?? "€0")
-                            .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(empfehlungColor)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(rankColor)
+                            .clipShape(Capsule())
 
-                        if zusatzrente > 0 {
-                            Text("Inkl. Zusatzrenten: \(NumberFormatter.currency.string(from: NSNumber(value: szenario.ergebnis.tatsaechlicheBruttoRente + zusatzrente)) ?? "€0")")
-                                .font(.footnote)
-                                .foregroundColor(.blue)
+                        if isBest {
+                            //Image(systemName: "crown.fill")
+                                //.foregroundColor(.yellow)
                         }
+
+                        Text(customTitle ?? szenario.name)
+                            .font(.headline)
+                            .fontWeight(.semibold)
                     }
 
-                    // Rentenbeginn
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Rentenbeginn")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                    Spacer()
+                }
 
-                            Text(szenario.ergebnis.tatsaechlicherRentenbeginn.deutscheFormatierung)
-                                .font(.body)
-                                .fontWeight(.medium)
-                        }
+                // Beschreibung oder Zusatzinfo anzeigen
+                if customTitle == "Aktuelle Berechnung", let info = additionalInfo {
+                    Text(info)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.leading)
+                } else {
+                    Text(szenario.beschreibung)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
 
-                        Spacer()
+                // Hauptergebnis
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Monatliche Rente (gesetzlich)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Text(NumberFormatter.currency.string(from: NSNumber(value: szenario.ergebnis.tatsaechlicheBruttoRente)) ?? "€0")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(empfehlungColor)
+
+                    if zusatzrente > 0 {
+                        Text("Inkl. Zusatzrenten: \(NumberFormatter.currency.string(from: NSNumber(value: szenario.ergebnis.tatsaechlicheBruttoRente + zusatzrente)) ?? "€0")")
+                            .font(.footnote)
+                            .foregroundColor(.blue)
                     }
                 }
-                .padding()
+
+                // Rentenbeginn
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("Rentenbeginn")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Text(szenario.ergebnis.tatsaechlicherRentenbeginn.deutscheFormatierung)
+                            .font(.body)
+                            .fontWeight(.medium)
+                    }
+
+                    Spacer()
+                }
             }
-            .groupBoxStyle(SzenarioGroupBoxStyle(empfehlung: szenario.empfehlung, isBest: isBest))
+            .padding()
         }
-        .buttonStyle(PlainButtonStyle())
+        .groupBoxStyle(SzenarioGroupBoxStyle(empfehlung: szenario.empfehlung, isBest: isBest))
     }
 
     private var rankColor: Color {
@@ -369,17 +338,16 @@ struct SzenarioGroupBoxStyle: GroupBoxStyle {
         .background(backgroundColor)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(borderColor, lineWidth: isBest ? 2 : 1)
+                // Keine isBest-abhängige Linienstärke mehr
+                .stroke(borderColor, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: shadowColor, radius: isBest ? 8 : 4, x: 0, y: isBest ? 4 : 2)
+        // Einheitlicher, dezenter Schatten – unabhängig von isBest
+        .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
     }
 
     private var backgroundColor: Color {
-        if isBest {
-            return Color.yellow.opacity(0.05)
-        }
-
+        // Gelbes Highlight entfernen
         switch empfehlung {
         case .positiv:
             return Color.green.opacity(0.03)
@@ -391,10 +359,7 @@ struct SzenarioGroupBoxStyle: GroupBoxStyle {
     }
 
     private var borderColor: Color {
-        if isBest {
-            return Color.yellow.opacity(0.4)
-        }
-
+        // Gelben Rand entfernen
         switch empfehlung {
         case .positiv:
             return Color.green.opacity(0.3)
@@ -406,10 +371,7 @@ struct SzenarioGroupBoxStyle: GroupBoxStyle {
     }
 
     private var shadowColor: Color {
-        if isBest {
-            return Color.yellow.opacity(0.2)
-        }
-
+        // Einheitlicher Schatten, kein isBest-Boost
         switch empfehlung {
         case .positiv:
             return Color.green.opacity(0.1)

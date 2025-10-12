@@ -91,9 +91,18 @@ struct RentenErgebnis: Codable, Identifiable {
         self.theoretischeBruttoRente = self.gesamtRentenpunkte * verwendeterRentenwert
         self.abschlagProzent = abschlagProzent
         self.abschlagBetrag = self.theoretischeBruttoRente * abschlagProzent
-        self.tatsaechlicheBruttoRente = self.theoretischeBruttoRente - self.abschlagBetrag
         
-        // Zusatzrenten
+        // Basis: gesetzliche Rente nach Abschlag
+        var tatsaechlicheBruttoRente = self.theoretischeBruttoRente - self.abschlagBetrag
+        
+        // Witwenrente nach deiner Vorgabe addieren (nur wenn > 0)
+        let witwenrente = max(0.0, person.witwenrente)
+        if witwenrente > 0 {
+            tatsaechlicheBruttoRente += witwenrente
+        }
+        self.tatsaechlicheBruttoRente = tatsaechlicheBruttoRente
+        
+        // Zusatzrenten (unverändert)
         self.zusatzrenten = person.gesamtZusatzrente
         self.gesamtBruttoRente = self.tatsaechlicheBruttoRente + self.zusatzrenten
         

@@ -15,13 +15,13 @@ class AppSettings {
     var rentenwert: Double = 40.79
     var beitragsbemessungsgrenze: Double = 96600.0
 
-    var steuerfreibetrag: Double = 12084.0
-    var steuerpflichtQuote: Double = 0.85
+    var steuerfreibetrag: Double = 12096.0
+    var steuerpflichtQuote: Double = 0.835
     var durchschnittlicherSteuersatz: Double = 0.15
 
     var krankenkassenBeitragssatz: Double = 0.146
-    var krankenkassenZusatzbeitrag: Double = 0.013
-    var pflegeversicherungsBeitrag: Double = 0.034
+    var krankenkassenZusatzbeitrag: Double = 0.0125
+    var pflegeversicherungsBeitrag: Double = 0.036
 
     var nettoFaktorSchaetzung: Double {
         steuerpflichtQuote * (1.0 - durchschnittlicherSteuersatz)

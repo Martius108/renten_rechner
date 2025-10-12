@@ -66,6 +66,23 @@ struct SettingsView: View {
             }
             .navigationTitle("Einstellungen")
             .navigationBarTitleDisplayMode(.large)
+            // Zusätzlicher "Fertig"-Button oben rechts, falls keine Tastatur sichtbar ist
+            
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Fertig") {
+                        // Speichere nur, wenn ein Datensatz existiert
+                        if !settings.isEmpty {
+                            try? context.save()
+                            // Tastatur schließen
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                            to: nil, from: nil, for: nil)
+                            showSuccessToast()
+                        }
+                    }
+                }
+            }
+            
             .onAppear {
                 if settings.isEmpty {
                     let neues = AppSettings()
@@ -103,6 +120,7 @@ struct EditableSettingsContent: View {
         werteSection
         infoSection
         .toolbar {
+            // "Fertig" innerhalb der Tastatur-Leiste
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
                 Button("Fertig") { saveAndDismiss() }
@@ -141,7 +159,7 @@ struct EditableSettingsContent: View {
     private var steuernUndAbgabenSection: some View {
         Section("Steuern & Sozialabgaben") {
             numberField(
-                title: "Steuerfreibetrag (0.0 - 1.0)",
+                title: "Steuerfreibetrag",
                 suffix: "€",
                 binding: $setting.steuerfreibetrag,
                 field: .steuerfreibetrag
@@ -149,13 +167,13 @@ struct EditableSettingsContent: View {
 
             numberField(title: "Steuerpflicht-Quote (0.0 - 1.0)", suffix: "",
                         binding: $setting.steuerpflichtQuote, field: .steuerpflichtQuote)
-            Text("Aktuell: \(String(format: "%.0f", setting.steuerpflichtQuote * 100))%")
+            Text("Aktuell: \(String(format: "%.1f", setting.steuerpflichtQuote * 100))%")
                 .font(.caption)
                 .foregroundColor(.blue)
 
             numberField(title: "Durchschnittlicher Steuersatz (0.0 - 1.0)", suffix: "",
                         binding: $setting.durchschnittlicherSteuersatz, field: .durchschnittlicherSteuersatz)
-            Text("Aktuell: \(String(format: "%.0f", setting.durchschnittlicherSteuersatz * 100))%")
+            Text("Aktuell: \(String(format: "%.1f", setting.durchschnittlicherSteuersatz * 100))%")
                 .font(.caption)
                 .foregroundColor(.blue)
 
@@ -167,13 +185,13 @@ struct EditableSettingsContent: View {
 
             numberField(title: "KV-Zusatzbeitrag (0.0 - 1.0)", suffix: "",
                         binding: $setting.krankenkassenZusatzbeitrag, field: .kvZusatz)
-            Text("Aktuell: \(String(format: "%.1f", setting.krankenkassenZusatzbeitrag * 100))%")
+            Text("Aktuell: \(String(format: "%.2f", setting.krankenkassenZusatzbeitrag * 100))%")
                 .font(.caption)
                 .foregroundColor(.blue)
 
             numberField(title: "Pflegeversicherung (0.0 - 1.0)", suffix: "",
                         binding: $setting.pflegeversicherungsBeitrag, field: .pvSatz)
-            Text("Aktuell: \(String(format: "%.1f", setting.pflegeversicherungsBeitrag * 100))% (3,4 % mit Kindern / 4,0 % kinderlos)")
+            Text("Aktuell: \(String(format: "%.1f", setting.pflegeversicherungsBeitrag * 100))% (3,6 % mit Kindern / 4,2 % kinderlos)")
                 .font(.caption)
                 .foregroundColor(.blue)
         }
@@ -239,9 +257,14 @@ struct EditableSettingsContent: View {
     // MARK: - Save
 
     private func saveAndDismiss() {
+        // Persistiere Änderungen am gebundenen AppSettings-Datensatz
         try? context.save()
-        hideKeyboard()
+
+        // Fokus löschen und Tastatur schließen
         focusedField = nil
+        hideKeyboard()
+
+        // Haptisches Feedback und Toast
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         onSaved()
     }

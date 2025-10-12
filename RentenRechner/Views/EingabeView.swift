@@ -94,10 +94,9 @@ struct EingabeView: View {
             .onChange(of: viewModel.person.aktuelleRentenpunkte) { _, _ in savePersonData() }
             .onChange(of: viewModel.person.zusatzrente1) { _, _ in savePersonData() }
             .onChange(of: viewModel.person.zusatzrente2) { _, _ in savePersonData() }
+            .onChange(of: viewModel.person.witwenrente) { _, _ in savePersonData() }
         }
     }
-    
-    // MARK: - Lifecycle
     
     // MARK: - Lifecycle
 
@@ -212,11 +211,11 @@ struct RentenoptionenSection: View {
                 if hatUserRentenbeginnGeaendert {
                     VStack(alignment: .leading, spacing: 8) {
                         if let appSettings = viewModel.appSettings {
-                                    let beginnDatum = appSettings.fruehesterAbschlagsfreierBeginn
-                                    Text("Frühester abschlagsfreier Beginn: \(beginnDatum.deutscheFormatierung)")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
+                            let beginnDatum = appSettings.fruehesterAbschlagsfreierBeginn
+                            Text("Frühester abschlagsfreier Beginn: \(beginnDatum.deutscheFormatierung)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                         
                         DatePicker(
                             "Gewünschter Rentenbeginn",
@@ -500,12 +499,39 @@ struct ZusatzrenteSection: View {
                     InfoText("Private Rentenversicherung, Rürup-Rente, etc.")
                 }
                 
-                if viewModel.person.gesamtZusatzrente > 0 {
-                    InfoRow(
-                        label: "Gesamt-Zusatzrenten",
-                        value: viewModel.formatCurrency(viewModel.person.gesamtZusatzrente),
-                        icon: "plus.circle"
-                    )
+                // Eigenständige Erfassung der Witwen-/Witwerrente (separat, nicht in gesamtZusatzrente)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Witwen-/Witwerrente (optional)")
+                        .font(.headline)
+                    
+                    HStack {
+                        TextField("0", value: $viewModel.person.witwenrente, format: .number)
+                            .keyboardType(.decimalPad)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        Text("€/Monat")
+                            .foregroundColor(.secondary)
+                    }
+                    InfoText("Monatliche Hinterbliebenenrente (separate Leistung)")
+                }
+                
+                // Zusammenfassung: Zusatzrenten und getrennt die Witwen-/Witwerrente
+                if viewModel.person.gesamtZusatzrente > 0 || (viewModel.person.witwenrente > 0) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if viewModel.person.gesamtZusatzrente > 0 {
+                            InfoRow(
+                                label: "Gesamt-Zusatzrenten",
+                                value: viewModel.formatCurrency(viewModel.person.gesamtZusatzrente),
+                                icon: "plus.circle"
+                            )
+                        }
+                        if viewModel.person.witwenrente > 0 {
+                            InfoRow(
+                                label: "Witwen-/Witwerrente",
+                                value: viewModel.formatCurrency(viewModel.person.witwenrente),
+                                icon: "heart.circle"
+                            )
+                        }
+                    }
                 }
             }
             .padding()

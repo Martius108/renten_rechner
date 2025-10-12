@@ -24,6 +24,9 @@ class Person {
     var zusatzrente1: Double
     var zusatzrente2: Double
     
+    // Witwenrente
+    var witwenrente: Double
+    
     // Computed Properties mit automatischer Normalisierung (Mitternacht Europe/Berlin)
     var geburtsdatum: Date {
         get {
@@ -45,16 +48,18 @@ class Person {
         self.aktuelleRente = nil
         self.zusatzrente1 = 0.0
         self.zusatzrente2 = 0.0
+        self.witwenrente = 0.0
     }
     
     init(
         geschlecht: Geschlecht = .maennlich,
-        geburtsdatum: Date = DateHelper.stableCalendar.date(from: DateComponents(year: 1980, month: 1, day: 1)) ?? Date(),
+        geburtsdatum: Date = DateHelper.stableCalendar.date(from: DateComponents(year: 1970, month: 1, day: 1)) ?? Date(),
         monatlichesEinkommen: Double = 0.0,
         aktuelleRentenpunkte: Double = 0.0,
         aktuelleRente: Double? = nil,
         zusatzrente1: Double = 0.0,
-        zusatzrente2: Double = 0.0
+        zusatzrente2: Double = 0.0,
+        witwenrente: Double = 0.0
     ) {
         self.id = UUID()
         self.geschlecht = geschlecht
@@ -64,6 +69,7 @@ class Person {
         self.aktuelleRente = aktuelleRente
         self.zusatzrente1 = zusatzrente1
         self.zusatzrente2 = zusatzrente2
+        self.witwenrente = witwenrente
     }
     
     // MARK: - Computed Properties
@@ -84,7 +90,7 @@ class Person {
         monatlichesEinkommen * 12.0
     }
     
-    // Zusatzrenten Berechnungen
+    // Zusatzrenten Berechnungen (ohne Witwenrente)
     var gesamtZusatzrente: Double {
         zusatzrente1 + zusatzrente2
     }
@@ -95,6 +101,10 @@ class Person {
     
     var hatZusatzrenten: Bool {
         gesamtZusatzrente > 0
+    }
+    
+    var jahresWitwenrente: Double {
+        witwenrente * 12.0
     }
 }
 
@@ -110,61 +120,38 @@ enum Geschlecht: String, CaseIterable, Codable {
 // MARK: - Validation Extensions
 extension Person {
     var isValid: Bool {
-        return isGeburtsdatumValid &&
-               isEinkommenValid &&
-               isRentenpunkteValid &&
-               isRentenbeginnValid &&
-               isZusatzrentenValid
+        return isGeburtsdatumValid && isRentenbeginnValid
     }
     
     var isGeburtsdatumValid: Bool {
-        // Nutze DateHelper-Logik für gültiges Geburtsdatum (mit DE-Zeitzone)
         return DateHelper.istGueltigesGeburtsdatum(geburtsdatum)
     }
     
     var isEinkommenValid: Bool {
-        // Obergrenze 96.600 / 12 = 8.050 (wird ggf. im ViewModel dynamisch geprüft)
-        return monatlichesEinkommen >= 0 && monatlichesEinkommen <= 8_050
+        return true
     }
     
     var isRentenpunkteValid: Bool {
-        return aktuelleRentenpunkte >= 0 && aktuelleRentenpunkte <= 200 // Plausibilitätsprüfung
+        return true
     }
     
     var isRentenbeginnValid: Bool {
-        // Hier muss die Prüfung auf den Rentenbeginn aus AppSettings erfolgen,
-        // also diese Validierung ggf. im ViewModel oder an anderer Stelle machen.
-        // Hier geben wir true zurück, da Person das nicht mehr kennt.
         return true
     }
     
     var isZusatzrentenValid: Bool {
-        // Zusatzrenten sollten nicht negativ sein und nicht unrealistisch hoch
-        return zusatzrente1 >= 0 && zusatzrente1 <= 5000 &&
-               zusatzrente2 >= 0 && zusatzrente2 <= 5000
+        return true
     }
 }
 
 // MARK: - Validation Errors
 enum PersonValidationError: LocalizedError {
     case ungueltigesGeburtsdatum
-    case einkommenZuHoch
-    case rentenpunkteUngueltig
-    case rentenbeginnZuFrueh
-    case zusatzrenteUngueltig
     
     var errorDescription: String? {
         switch self {
         case .ungueltigesGeburtsdatum:
-            return "Bitte geben Sie ein gültiges Geburtsdatum ein (zwischen 1955 und heute, Mindestalter 18 Jahre)"
-        case .einkommenZuHoch:
-            return "Das monatliche Einkommen darf 8.050€ nicht überschreiten (Beitragsbemessungsgrenze)"
-        case .rentenpunkteUngueltig:
-            return "Die Anzahl der Rentenpunkte muss zwischen 0 und 200 liegen"
-        case .rentenbeginnZuFrueh:
-            return "Der gewünschte Rentenbeginn darf nicht vor dem 60. Lebensjahr liegen"
-        case .zusatzrenteUngueltig:
-            return "Zusatzrenten müssen zwischen 0€ und 5.000€ pro Monat liegen"
+            return "Bitte geben Sie ein gültiges Geburtsdatum ein"
         }
     }
 }
