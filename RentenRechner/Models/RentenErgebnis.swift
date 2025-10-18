@@ -114,7 +114,8 @@ struct RentenErgebnis: Codable, Identifiable {
         //    - Zusatzbeitrag: voll (kein Zuschuss)
         //    - Pflege: voll
         let kvHalb = s.krankenkassenBeitragssatz / 2.0
-        let sozialabgabenSatz = kvHalb + s.krankenkassenZusatzbeitrag + s.pflegeversicherungsBeitrag
+        let zusatzHalb = s.krankenkassenZusatzbeitrag / 2.0
+        let sozialabgabenSatz = kvHalb + zusatzHalb + s.pflegeversicherungsBeitrag
         let sozialabgaben = self.tatsaechlicheBruttoRente * sozialabgabenSatz
         let renteNachSozialabgaben = self.tatsaechlicheBruttoRente - sozialabgaben
         

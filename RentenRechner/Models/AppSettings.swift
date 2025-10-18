@@ -20,7 +20,7 @@ class AppSettings {
     var durchschnittlicherSteuersatz: Double = 0.15
 
     var krankenkassenBeitragssatz: Double = 0.146
-    var krankenkassenZusatzbeitrag: Double = 0.0125
+    var krankenkassenZusatzbeitrag: Double = 0.025
     var pflegeversicherungsBeitrag: Double = 0.036
 
     var nettoFaktorSchaetzung: Double {

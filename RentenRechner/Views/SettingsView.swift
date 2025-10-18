@@ -185,13 +185,13 @@ struct EditableSettingsContent: View {
 
             numberField(title: "KV-Zusatzbeitrag (0.0 - 1.0)", suffix: "",
                         binding: $setting.krankenkassenZusatzbeitrag, field: .kvZusatz)
-            Text("Aktuell: \(String(format: "%.2f", setting.krankenkassenZusatzbeitrag * 100))%")
+            Text("Aktuell: \(String(format: "%.1f", setting.krankenkassenZusatzbeitrag * 100))%")
                 .font(.caption)
                 .foregroundColor(.blue)
 
             numberField(title: "Pflegeversicherung (0.0 - 1.0)", suffix: "",
                         binding: $setting.pflegeversicherungsBeitrag, field: .pvSatz)
-            Text("Aktuell: \(String(format: "%.1f", setting.pflegeversicherungsBeitrag * 100))% (3,6 % mit Kindern / 4,2 % kinderlos)")
+            Text("Aktuell: \(String(format: "%.1f", setting.pflegeversicherungsBeitrag * 100))% (3,6% mit Kindern / 4,2% kinderlos)")
                 .font(.caption)
                 .foregroundColor(.blue)
         }
