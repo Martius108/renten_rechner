@@ -8,6 +8,7 @@
 
 /* Begin PBXFileReference section */
 		CCBCCFB82E89148D00ACE100 /* RentenRechner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RentenRechner.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CCBCCFC62E89148E00ACE100 /* RentenRechnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RentenRechnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +17,22 @@
 			path = RentenRechner;
 			sourceTree = "<group>";
 		};
+		CCBCCFC72E89148E00ACE100 /* RentenRechnerTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RentenRechnerTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		CCBCCFB52E89148D00ACE100 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CCBCCFC82E89148E00ACE100 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +46,7 @@
 			isa = PBXGroup;
 			children = (
 				CCBCCFBA2E89148D00ACE100 /* RentenRechner */,
+				CCBCCFC72E89148E00ACE100 /* RentenRechnerTests */,
 				CCBCCFB92E89148D00ACE100 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +55,7 @@
 			isa = PBXGroup;
 			children = (
 				CCBCCFB82E89148D00ACE100 /* RentenRechner.app */,
+				CCBCCFC62E89148E00ACE100 /* RentenRechnerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +85,29 @@
 			productReference = CCBCCFB82E89148D00ACE100 /* RentenRechner.app */;
 			productType = "com.apple.product-type.application";
 		};
+		CCBCCFC92E89148E00ACE100 /* RentenRechnerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CCBCCFD02E89148E00ACE100 /* Build configuration list for PBXNativeTarget "RentenRechnerTests" */;
+			buildPhases = (
+				CCBCCFCA2E89148E00ACE100 /* Sources */,
+				CCBCCFC82E89148E00ACE100 /* Frameworks */,
+				CCBCCFCB2E89148E00ACE100 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CCBCCFCC2E89148E00ACE100 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				CCBCCFC72E89148E00ACE100 /* RentenRechnerTests */,
+			);
+			name = RentenRechnerTests;
+			packageProductDependencies = (
+			);
+			productName = RentenRechnerTests;
+			productReference = CCBCCFC62E89148E00ACE100 /* RentenRechnerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -78,10 +116,14 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					CCBCCFB72E89148D00ACE100 = {
 						CreatedOnToolsVersion = 26.0;
+					};
+					CCBCCFC92E89148E00ACE100 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = CCBCCFB72E89148D00ACE100;
 					};
 				};
 			};
@@ -100,12 +142,20 @@
 			projectRoot = "";
 			targets = (
 				CCBCCFB72E89148D00ACE100 /* RentenRechner */,
+				CCBCCFC92E89148E00ACE100 /* RentenRechnerTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		CCBCCFB62E89148D00ACE100 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CCBCCFCB2E89148E00ACE100 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +172,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CCBCCFCA2E89148E00ACE100 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CCBCCFCC2E89148E00ACE100 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CCBCCFB72E89148D00ACE100 /* RentenRechner */;
+			targetProxy = CCBCCFCD2E89148E00ACE100 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		CCBCCFCD2E89148E00ACE100 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CCBCCFB02E89148D00ACE100 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CCBCCFB72E89148D00ACE100;
+			remoteInfo = RentenRechner;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin XCBuildConfiguration section */
 		CCBCCFC12E89148E00ACE100 /* Debug */ = {
@@ -178,12 +253,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -236,11 +312,12 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -256,7 +333,7 @@
 				DEVELOPMENT_TEAM = FTB9X87833;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "DRV Rechner";
+				INFOPLIST_KEY_CFBundleDisplayName = "RentenRechner DE";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -289,7 +366,7 @@
 				DEVELOPMENT_TEAM = FTB9X87833;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "DRV Rechner";
+				INFOPLIST_KEY_CFBundleDisplayName = "RentenRechner DE";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -312,6 +389,52 @@
 			};
 			name = Release;
 		};
+		CCBCCFCE2E89148E00ACE100 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = FTB9X87833;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.martinlanius.RentenRechnerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RentenRechner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RentenRechner";
+			};
+			name = Debug;
+		};
+		CCBCCFCF2E89148E00ACE100 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = FTB9X87833;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.martinlanius.RentenRechnerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RentenRechner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RentenRechner";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -329,6 +452,15 @@
 			buildConfigurations = (
 				CCBCCFC42E89148E00ACE100 /* Debug */,
 				CCBCCFC52E89148E00ACE100 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CCBCCFD02E89148E00ACE100 /* Build configuration list for PBXNativeTarget "RentenRechnerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CCBCCFCE2E89148E00ACE100 /* Debug */,
+				CCBCCFCF2E89148E00ACE100 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

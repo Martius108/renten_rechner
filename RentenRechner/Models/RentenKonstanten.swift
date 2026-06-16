@@ -57,16 +57,11 @@ struct RegelaltersgrenzenTabelle {
         case 1956: return (63, 8, nil, nil, nil)
         case 1957: return (63, 10, nil, nil, nil)
         case 1958: return (64, 0, nil, nil, nil)
-        case 1959:
-            return (0, 0, 2023, 12, 31)
-        case 1960:
-            return (0, 0, 2025, 12, 31)
-        case 1961:
-            return (0, 0, 2027, 12, 31)
-        case 1962:
-            return (0, 0, 2029, 12, 31)
-        case 1963:
-            return (0, 0, 2028, 12, 31)
+        case 1959: return (64, 2, nil, nil, nil)
+        case 1960: return (64, 4, nil, nil, nil)
+        case 1961: return (64, 6, nil, nil, nil)
+        case 1962: return (64, 8, nil, nil, nil)
+        case 1963: return (64, 10, nil, nil, nil)
         case 1964...: return (65, 0, nil, nil, nil)
         default: return (65, 0, nil, nil, nil)
         }
@@ -97,10 +92,6 @@ struct RegelaltersgrenzenTabelle {
         }
     }
 
-    static func frauenrente(fuer geburtsjahr: Int) -> (jahre: Int, monate: Int)? {
-        if geburtsjahr <= 1951 { return (60, 0) }
-        return nil
-    }
 }
 
 /// Datums-Helfer für Altersgrenzen
@@ -128,12 +119,4 @@ extension RegelaltersgrenzenTabelle {
         return DateHelper.naechsterMonatserster(ab: basis)
     }
 
-    static func frauenrenteDatum(fuer geburtsdatum: Date, geschlecht: String) -> Date? {
-        guard geschlecht.lowercased() == "w" else { return nil }
-        if let (jahre, monate) = frauenrente(fuer: Calendar.current.component(.year, from: geburtsdatum)) {
-            let basis = DateHelper.addiere(jahre: jahre, monate: monate, zu: geburtsdatum) ?? geburtsdatum
-            return DateHelper.naechsterMonatserster(ab: basis)
-        }
-        return nil
-    }
 }

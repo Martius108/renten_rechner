@@ -20,15 +20,11 @@ struct SzenarienView: View {
             let startOfDayAbweichend = calendar.startOfDay(for: abweichenderBeginn)
             let startOfDayRegelalter = calendar.startOfDay(for: regelalter)
             
-            debugPrint("abweichenderBeginn (StartOfDay): \(startOfDayAbweichend), regelalter (StartOfDay): \(startOfDayRegelalter)")
-            
             if startOfDayAbweichend != startOfDayRegelalter {
                 let info = "Gesetzliche Regelaltersgrenze: \(regelalter.deutscheFormatierung)"
-                debugPrint("Debug: zusatzInfo gesetzt: \(info)")
                 return info
             }
         }
-        debugPrint("Debug: zusatzInfo gesetzt: nil")
         return nil
     }
 
@@ -44,21 +40,16 @@ struct SzenarienView: View {
 
                             ForEach(Array(viewModel.szenarien.enumerated()), id: \.element.name) { index, szenario in
                                 if index == 0 {
-                                    // Hier nur noch die Property verwenden, keine Berechnung
                                     SzenarioCard(
                                         szenario: szenario,
-                                        zusatzrente: viewModel.person.gesamtZusatzrente,
                                         rank: index + 1,
-                                        isBest: szenario.name == viewModel.getBestesSzenario()?.name,
                                         customTitle: "Aktuelle Berechnung",
                                         additionalInfo: zusatzInfo
                                     )
                                 } else {
                                     SzenarioCard(
                                         szenario: szenario,
-                                        zusatzrente: viewModel.person.gesamtZusatzrente,
-                                        rank: index + 1,
-                                        isBest: szenario.name == viewModel.getBestesSzenario()?.name
+                                        rank: index + 1
                                     )
                                 }
                             }
@@ -93,15 +84,9 @@ struct SzenarienView: View {
                     .font(.body)
                     .foregroundColor(.secondary)
 
-                if let bestesSezenario = viewModel.getBestesSzenario() {
-                    Divider()
-
-                    HStack {
-                        Text("Beste Option: **\(bestesSezenario.name)** mit \(viewModel.formatCurrency(bestesSezenario.ergebnis.tatsaechlicheBruttoRente))")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
+                Text("Die höhere Monatsrente ist nicht automatisch die beste Wahl, weil ein späterer Beginn auch weniger Bezugsmonate bedeutet.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             .padding()
         }
@@ -126,7 +111,7 @@ struct SzenarienView: View {
                         ForEach(Array(viewModel.szenarien.prefix(3).enumerated()), id: \.element.name) { _, szenario in
                             QuickComparisonRow(
                                 szenario: szenario,
-                                baseline: viewModel.szenarien.first(where: { $0.name.contains("Regelalter") })
+                                baseline: viewModel.szenarien.first
                             )
                         }
                     }
@@ -146,9 +131,7 @@ struct SzenarienView: View {
 
 struct SzenarioCard: View {
     let szenario: RentenSzenario
-    let zusatzrente: Double
     let rank: Int
-    let isBest: Bool
 
     // Optionale Parameter für individuellen Titel und Zusatzinfo
     var customTitle: String? = nil
@@ -168,11 +151,6 @@ struct SzenarioCard: View {
                             .padding(.vertical, 4)
                             .background(rankColor)
                             .clipShape(Capsule())
-
-                        if isBest {
-                            //Image(systemName: "crown.fill")
-                                //.foregroundColor(.yellow)
-                        }
 
                         Text(customTitle ?? szenario.name)
                             .font(.headline)
@@ -206,11 +184,6 @@ struct SzenarioCard: View {
                         .fontWeight(.bold)
                         .foregroundColor(empfehlungColor)
 
-                    if zusatzrente > 0 {
-                        Text("Inkl. Zusatzrenten: \(NumberFormatter.currency.string(from: NSNumber(value: szenario.ergebnis.tatsaechlicheBruttoRente + zusatzrente)) ?? "€0")")
-                            .font(.footnote)
-                            .foregroundColor(.blue)
-                    }
                 }
 
                 // Rentenbeginn
@@ -230,7 +203,7 @@ struct SzenarioCard: View {
             }
             .padding()
         }
-        .groupBoxStyle(SzenarioGroupBoxStyle(empfehlung: szenario.empfehlung, isBest: isBest))
+        .groupBoxStyle(SzenarioGroupBoxStyle(empfehlung: szenario.empfehlung))
     }
 
     private var rankColor: Color {
@@ -255,7 +228,6 @@ struct SzenarioCard: View {
 
 struct SzenarioDetailView: View {
     let szenario: RentenSzenario
-    let zusatzrente: Double
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
@@ -291,12 +263,7 @@ struct SzenarioDetailView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Gesetzliche Bruttorente: \(viewCurrency(szenario.ergebnis.tatsaechlicheBruttoRente))")
 
-                                if zusatzrente > 0 {
-                                    Text("Inkl. Zusatzrenten: \(viewCurrency(szenario.ergebnis.tatsaechlicheBruttoRente + zusatzrente))")
-                                        .foregroundColor(.blue)
-                                }
-
-                                Text("Geschätzte Nettorente: \(viewCurrency(szenario.ergebnis.geschaetzteNettoRente + zusatzrente))")
+                                Text("Geschätzte Nettorente: \(viewCurrency(szenario.ergebnis.geschaetzteNettoRente))")
                                     .fontWeight(.semibold)
                                     .foregroundColor(.green)
                             }
@@ -329,7 +296,6 @@ struct SzenarioDetailView: View {
 
 struct SzenarioGroupBoxStyle: GroupBoxStyle {
     let empfehlung: SzenarioEmpfehlung
-    let isBest: Bool
 
     func makeBody(configuration: Configuration) -> some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -338,16 +304,13 @@ struct SzenarioGroupBoxStyle: GroupBoxStyle {
         .background(backgroundColor)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                // Keine isBest-abhängige Linienstärke mehr
                 .stroke(borderColor, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        // Einheitlicher, dezenter Schatten – unabhängig von isBest
         .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
     }
 
     private var backgroundColor: Color {
-        // Gelbes Highlight entfernen
         switch empfehlung {
         case .positiv:
             return Color.green.opacity(0.03)
@@ -359,7 +322,6 @@ struct SzenarioGroupBoxStyle: GroupBoxStyle {
     }
 
     private var borderColor: Color {
-        // Gelben Rand entfernen
         switch empfehlung {
         case .positiv:
             return Color.green.opacity(0.3)
@@ -371,7 +333,6 @@ struct SzenarioGroupBoxStyle: GroupBoxStyle {
     }
 
     private var shadowColor: Color {
-        // Einheitlicher Schatten, kein isBest-Boost
         switch empfehlung {
         case .positiv:
             return Color.green.opacity(0.1)
@@ -439,6 +400,7 @@ extension NumberFormatter {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.locale = Locale(identifier: "de_DE")
+        formatter.usesGroupingSeparator = false
         return formatter
     }()
 }

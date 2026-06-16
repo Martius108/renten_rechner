@@ -72,11 +72,11 @@ struct InfoView: View {
                         .fontWeight(.semibold)
                     
                     Text("""
-                    Der RentenRechner Deutschland hilft Ihnen dabei, Ihre zu erwartende gesetzliche Rente nach deutschem Rentenrecht zu berechnen.
+                    Der RentenRechner Deutschland hilft Ihnen dabei, Ihre zu erwartende gesetzliche Altersrente grob zu berechnen.
                     
-                    Die App berücksichtigt die aktuell hinterlegten Werte (\(viewModel.settings.gueltigkeitsjahr)) und bietet verschiedene Szenarien für Ihren Rentenbeginn.
+                    Die App berücksichtigt die aktuell hinterlegten Werte (\(viewModel.settings.gueltigkeitsjahrText)) und bietet verschiedene Szenarien für Ihren Rentenbeginn.
                     
-                    Wichtig: Diese App ersetzt keine professionelle Beratung und die Berechnungen sind unverbindlich.
+                    Zusatzrenten, Betriebsrenten, Hinterbliebenenrenten und Hinzuverdienste werden nicht berechnet. Wichtig: Diese App ersetzt keine professionelle Beratung und die Berechnungen sind unverbindlich.
                     """)
                     .font(.body)
                 }
@@ -95,7 +95,7 @@ struct InfoView: View {
                 HStack {
                     Image(systemName: "function")
                         .foregroundColor(.blue)
-                    Text("Berechnungsgrundlagen \(settings.gueltigkeitsjahr)")
+                    Text("Berechnungsgrundlagen \(settings.gueltigkeitsjahrText)")
                         .font(.headline)
                         .fontWeight(.semibold)
                 }
@@ -194,7 +194,7 @@ struct InfoView: View {
                     DisclaimerPoint(
                         icon: "calendar.badge.exclamationmark",
                         title: "Aktuelle Werte",
-                        text: "Die Berechnung basiert auf den hinterlegten Werten (\(viewModel.settings.gueltigkeitsjahr)). Zukünftige Änderungen der Rentenformel oder -werte sind nicht berücksichtigt."
+                        text: "Die Berechnung basiert auf den hinterlegten Werten (\(viewModel.settings.gueltigkeitsjahrText)). Zukünftige Änderungen der Rentenformel oder -werte sind nicht berücksichtigt."
                     )
                     
                     DisclaimerPoint(

@@ -27,7 +27,6 @@ struct EingabeView: View {
                         HeaderSection()
                         PersonalDatenSection(viewModel: viewModel, savePersonData: savePersonData)
                         BeruflicheDatenSection(viewModel: viewModel, savePersonData: savePersonData)
-                        ZusatzrenteSection(viewModel: viewModel)
                         RentenoptionenSection(
                             viewModel: viewModel,
                             rentenbeginnUI: $rentenbeginnUI,
@@ -42,6 +41,7 @@ struct EingabeView: View {
                     }
                     .padding()
                 }
+                .scrollDismissesKeyboard(.interactively)
                 
                 if viewModel.isLoading {
                     Color.black.opacity(0.3)
@@ -65,11 +65,24 @@ struct EingabeView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Reset") {
                         viewModel.resetEingaben()
-                        rentenbeginnUI = viewModel.appSettings?.regelaltersgrenze ?? viewModel.getRegelaltersgrenze()
+                        if let settings = viewModel.appSettings {
+                            settings.nutztAbweichendenRentenbeginn = false
+                            settings.abweichenderRentenbeginn = settings.regelaltersgrenze
+                            rentenbeginnUI = settings.regelaltersgrenze
+                        } else {
+                            rentenbeginnUI = viewModel.getRegelaltersgrenze()
+                        }
                         hatUserRentenbeginnGeaendert = false
                         saveAppSettings()
                     }
                     .foregroundColor(.red)
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Fertig") {
+                        hideKeyboard()
+                    }
+                    .font(.body.weight(.semibold))
                 }
             }
             .onAppear(perform: onAppear)
@@ -83,6 +96,7 @@ struct EingabeView: View {
                     appSettings.regelaltersgrenze = neueRegelaltersgrenze
                     
                     if !hatUserRentenbeginnGeaendert {
+                        appSettings.nutztAbweichendenRentenbeginn = false
                         appSettings.abweichenderRentenbeginn = neueRegelaltersgrenze
                         rentenbeginnUI = neueRegelaltersgrenze
                     }
@@ -92,15 +106,14 @@ struct EingabeView: View {
             }
             .onChange(of: viewModel.person.monatlichesEinkommen) { _, _ in savePersonData() }
             .onChange(of: viewModel.person.aktuelleRentenpunkte) { _, _ in savePersonData() }
-            .onChange(of: viewModel.person.zusatzrente1) { _, _ in savePersonData() }
-            .onChange(of: viewModel.person.zusatzrente2) { _, _ in savePersonData() }
-            .onChange(of: viewModel.person.witwenrente) { _, _ in savePersonData() }
         }
     }
     
     // MARK: - Lifecycle
 
     private func onAppear() {
+        let hatteGespeichertePerson = persons.first != nil
+
         if let saved = persons.first {
             viewModel.person = saved
             viewModel.person.geburtsdatum = DateHelper.mitternachtStabil(fuer: viewModel.person.geburtsdatum)
@@ -113,11 +126,15 @@ struct EingabeView: View {
         viewModel.setModelContext(context)
         
         if let appSettings = viewModel.appSettings {
-            let regelalter = viewModel.getRegelaltersgrenze()
-            appSettings.regelaltersgrenze = regelalter
-            appSettings.fruehesterAbschlagsfreierBeginn = viewModel.getFruehesterAbschlagsfreierBeginn()
+            appSettings.updateRentenParameter(geburtsdatum: viewModel.person.geburtsdatum)
+            let regelalter = appSettings.regelaltersgrenze
             
-            if !hatUserRentenbeginnGeaendert {
+            hatUserRentenbeginnGeaendert = appSettings.nutztAbweichendenRentenbeginn
+            if appSettings.nutztAbweichendenRentenbeginn,
+               let gespeicherterBeginn = appSettings.abweichenderRentenbeginn {
+                rentenbeginnUI = gespeicherterBeginn
+            } else {
+                appSettings.nutztAbweichendenRentenbeginn = false
                 appSettings.abweichenderRentenbeginn = regelalter
                 rentenbeginnUI = regelalter
             }
@@ -125,22 +142,11 @@ struct EingabeView: View {
             saveAppSettings()
         }
         
-        // Debug: Ausgabe Regelaltersgrenze für 01.01.1970
-        let geburtsdatum = DateHelper.erstelleDatum(jahr: 1970, monat: 1, tag: 1)!
-        let regelaltersgrenze = DateHelper.addiere(jahre: 67, monate: 0, zu: geburtsdatum)!
-        print("Regelaltersgrenze für 01.01.1970: \(regelaltersgrenze) / lokal: \(regelaltersgrenze.deutscheFormatierung)")
-        
-        // Toggle standardmäßig auf false
-        hatUserRentenbeginnGeaendert = false
-        
-        print("[EingabeView onAppear] rentenbeginnUI: \(rentenbeginnUI)")
-        print("[EingabeView onAppear] hatUserRentenbeginnGeaendert: \(hatUserRentenbeginnGeaendert)")
-        print("[EingabeView onAppear] appSettings.regelaltersgrenze: \(viewModel.appSettings?.regelaltersgrenze ?? Date())")
-        print("[EingabeView onAppear] appSettings.abweichenderRentenbeginn: \(viewModel.appSettings?.abweichenderRentenbeginn ?? Date())")
-        
-        viewModel.appSettings?.updateRentenParameter(geburtsdatum: viewModel.person.geburtsdatum)
-        
         isInitialLoad = false
+
+        if hatteGespeichertePerson {
+            viewModel.aktualisiereBerechnungOhneNavigation()
+        }
     }
     
     // MARK: - Save Helpers
@@ -149,9 +155,9 @@ struct EingabeView: View {
         viewModel.person.geburtsdatum = DateHelper.mitternachtStabil(fuer: viewModel.person.geburtsdatum)
         do {
             try context.save()
-            print("[EingabeView savePersonData] Person gespeichert")
         } catch {
-            print("Fehler beim Speichern: \(error)")
+            viewModel.fehlerMeldung = error.localizedDescription
+            viewModel.showingError = true
         }
     }
     
@@ -160,9 +166,9 @@ struct EingabeView: View {
             do {
                 context.insert(appSettings)
                 try context.save()
-                print("[EingabeView saveAppSettings] AppSettings gespeichert")
             } catch {
-                print("Fehler beim Speichern der AppSettings: \(error)")
+                viewModel.fehlerMeldung = error.localizedDescription
+                viewModel.showingError = true
             }
         }
     }
@@ -189,18 +195,20 @@ struct RentenoptionenSection: View {
                         guard !isInitialLoad else { return }
                         isProgrammaticChange = true
                         if newValue {
-                            if let settings = viewModel.appSettings,
-                               let abweichenderBeginn = settings.abweichenderRentenbeginn,
-                               abweichenderBeginn == settings.regelaltersgrenze {
-                                rentenbeginnUI = abweichenderBeginn
-                                print("[RentenoptionenSection] rentenbeginnUI zurückgesetzt auf abweichenderBeginn (Regelaltersgrenze)")
+                            if let settings = viewModel.appSettings {
+                                settings.nutztAbweichendenRentenbeginn = true
+                                if settings.abweichenderRentenbeginn == nil {
+                                    settings.abweichenderRentenbeginn = settings.fruehesterAbschlagsfreierBeginn
+                                }
+                                rentenbeginnUI = settings.abweichenderRentenbeginn ?? settings.fruehesterAbschlagsfreierBeginn
+                                saveAppSettings()
                             }
                         } else {
                             if let settings = viewModel.appSettings {
+                                settings.nutztAbweichendenRentenbeginn = false
                                 settings.abweichenderRentenbeginn = settings.regelaltersgrenze
                                 rentenbeginnUI = settings.regelaltersgrenze
                                 saveAppSettings()
-                                print("[RentenoptionenSection] Toggle aus: abweichenderRentenbeginn und rentenbeginnUI auf Regelaltersgrenze gesetzt")
                             }
                         }
                         DispatchQueue.main.async {
@@ -212,7 +220,7 @@ struct RentenoptionenSection: View {
                     VStack(alignment: .leading, spacing: 8) {
                         if let appSettings = viewModel.appSettings {
                             let beginnDatum = appSettings.fruehesterAbschlagsfreierBeginn
-                            Text("Frühester abschlagsfreier Beginn: \(beginnDatum.deutscheFormatierung)")
+                            Text("Frühester abschlagsfreier Beginn bei 45 Versicherungsjahren: \(beginnDatum.deutscheFormatierung)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -227,15 +235,11 @@ struct RentenoptionenSection: View {
                         .onChange(of: rentenbeginnUI) { _, newValue in
                             guard !isInitialLoad && !isProgrammaticChange else { return }
                             if let appSettings = viewModel.appSettings {
+                                appSettings.nutztAbweichendenRentenbeginn = true
                                 appSettings.abweichenderRentenbeginn = DateHelper.mitternachtStabil(fuer: newValue)
-                                let formatter = DateFormatter()
-                                formatter.dateStyle = .short
-                                formatter.timeStyle = .none
-                                print("[RentenoptionenSection] appSettings.abweichenderRentenbeginn gesetzt auf: \(formatter.string(from: newValue))")
                                 saveAppSettings()
                             }
                             hatUserRentenbeginnGeaendert = true
-                            print("[RentenoptionenSection] hatUserRentenbeginnGeaendert gesetzt auf true")
                         }
                         
                         if let fehler = viewModel.rentenbeginnFehler {
@@ -276,7 +280,7 @@ private struct ZusatzinformationenAbschlagsfrei: View {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
-                    Text("✅ Abschlagsfreier Rentenbeginn (45 Beitragsjahre)")
+                    Text("✅ Abschlagsfreier Rentenbeginn bei erfüllten 45 Versicherungsjahren")
                         .font(.caption)
                         .foregroundColor(.green)
                 }
@@ -334,21 +338,6 @@ struct PersonalDatenSection: View {
                 SectionHeader(title: "Persönliche Angaben", icon: "person.fill")
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Geschlecht")
-                        .font(.headline)
-                    
-                    Picker("Geschlecht", selection: $viewModel.person.geschlecht) {
-                        ForEach(Geschlecht.allCases, id: \.self) { geschlecht in
-                            Text(geschlecht.displayName).tag(geschlecht)
-                        }
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .onChange(of: viewModel.person.geschlecht) { _, _ in
-                        savePersonData()
-                    }
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
                     Text("Geburtsdatum")
                         .font(.headline)
                     
@@ -404,7 +393,7 @@ struct BeruflicheDatenSection: View {
                         .font(.headline)
                     
                     HStack {
-                        TextField("0", value: $viewModel.person.monatlichesEinkommen, format: .number)
+                        TextField("0", value: $viewModel.person.monatlichesEinkommen, format: .number.grouping(.never))
                             .keyboardType(.decimalPad)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                         
@@ -424,7 +413,7 @@ struct BeruflicheDatenSection: View {
                     Text("Bereits erworbene Rentenpunkte")
                         .font(.headline)
                     
-                    TextField("0,0", value: $viewModel.person.aktuelleRentenpunkte, format: .number)
+                    TextField("0,0", value: $viewModel.person.aktuelleRentenpunkte, format: .number.grouping(.never))
                         .keyboardType(.decimalPad)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                     
@@ -435,104 +424,6 @@ struct BeruflicheDatenSection: View {
                     }
                 }
                 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Aktuelle Rente (optional)")
-                        .font(.headline)
-                    
-                    HStack {
-                        TextField("0", value: .init(
-                            get: { viewModel.person.aktuelleRente ?? 0 },
-                            set: {
-                                viewModel.person.aktuelleRente = $0 > 0 ? $0 : nil
-                                savePersonData()
-                            }
-                        ), format: .number)
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        
-                        Text("€")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    InfoText("Laut Ihrem letzten Rentenbescheid")
-                }
-            }
-            .padding()
-        }
-        .groupBoxStyle(CardGroupBoxStyle())
-    }
-}
-
-struct ZusatzrenteSection: View {
-    @ObservedObject var viewModel: RentenrechnerViewModel
-    
-    var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 16) {
-                SectionHeader(title: "Zusatzrenten", icon: "building.columns.fill")
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Zusatzrente 1 (z.B. Betriebsrente)")
-                        .font(.headline)
-                    
-                    HStack {
-                        TextField("0", value: $viewModel.person.zusatzrente1, format: .number)
-                            .keyboardType(.decimalPad)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                        Text("€/Monat")
-                            .foregroundColor(.secondary)
-                    }
-                    InfoText("Betriebsrente, Riester-Rente, etc.")
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Zusatzrente 2 (z.B. Private Rente)")
-                        .font(.headline)
-                    
-                    HStack {
-                        TextField("0", value: $viewModel.person.zusatzrente2, format: .number)
-                            .keyboardType(.decimalPad)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                        Text("€/Monat")
-                            .foregroundColor(.secondary)
-                    }
-                    InfoText("Private Rentenversicherung, Rürup-Rente, etc.")
-                }
-                
-                // Eigenständige Erfassung der Witwen-/Witwerrente (separat, nicht in gesamtZusatzrente)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Witwen-/Witwerrente (optional)")
-                        .font(.headline)
-                    
-                    HStack {
-                        TextField("0", value: $viewModel.person.witwenrente, format: .number)
-                            .keyboardType(.decimalPad)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                        Text("€/Monat")
-                            .foregroundColor(.secondary)
-                    }
-                    InfoText("Monatliche Hinterbliebenenrente (separate Leistung)")
-                }
-                
-                // Zusammenfassung: Zusatzrenten und getrennt die Witwen-/Witwerrente
-                if viewModel.person.gesamtZusatzrente > 0 || (viewModel.person.witwenrente > 0) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        if viewModel.person.gesamtZusatzrente > 0 {
-                            InfoRow(
-                                label: "Gesamt-Zusatzrenten",
-                                value: viewModel.formatCurrency(viewModel.person.gesamtZusatzrente),
-                                icon: "plus.circle"
-                            )
-                        }
-                        if viewModel.person.witwenrente > 0 {
-                            InfoRow(
-                                label: "Witwen-/Witwerrente",
-                                value: viewModel.formatCurrency(viewModel.person.witwenrente),
-                                icon: "heart.circle"
-                            )
-                        }
-                    }
-                }
             }
             .padding()
         }
@@ -568,7 +459,7 @@ struct BerechnungsgrundlagenSection: View {
                     icon: "chart.line.uptrend.xyaxis"
                 )
                 
-                InfoText("Diese Werte gelten für \(settings.gueltigkeitsjahr) und können sich ändern.")
+                InfoText("Diese Werte gelten für \(settings.gueltigkeitsjahrText) und können sich ändern.")
             }
             .padding()
         }
@@ -582,8 +473,6 @@ struct BerechnenButton: View {
     var body: some View {
         Button(action: {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-            print("[EingabeView] Berechnen Button gedrückt")
-            print("[EingabeView] Aktueller rentenbeginnUI: \(viewModel.appSettings?.abweichenderRentenbeginn ?? Date())")
             viewModel.berechneRente()
         }) {
             HStack {

@@ -51,7 +51,8 @@ class RentenrechnerViewModel: ObservableObject {
     // MARK: - Hilfs-Property für aktuellen wirksamen Rentenbeginn
     
     var aktuellerRentenbeginn: Date {
-        guard fruehererRentenbeginnGewuenscht, let settings = appSettings,
+        guard let settings = appSettings,
+              settings.nutztAbweichendenRentenbeginn,
               let rentenbeginn = settings.abweichenderRentenbeginn else {
             return getRegelaltersgrenze()
         }
@@ -95,8 +96,6 @@ class RentenrechnerViewModel: ObservableObject {
         }
         
         setupValidation()
-        setupFruehererRentenbeginnBinding()
-        loadSampleDataIfNeeded()
     }
     
     // MARK: - SwiftData Setup
@@ -156,9 +155,11 @@ class RentenrechnerViewModel: ObservableObject {
             .store(in: &cancellables)
         
         // Rentenbeginn Warnungen
-        Publishers.CombineLatest($fruehererRentenbeginnGewuenscht, $appSettings)
-            .map { [weak self] (fruehererBeginn, settings) -> String? in
-                guard let self = self, fruehererBeginn, let settings = settings,
+        $appSettings
+            .map { [weak self] settings -> String? in
+                guard let self = self,
+                      let settings = settings,
+                      settings.nutztAbweichendenRentenbeginn,
                       let rentenbeginn = settings.abweichenderRentenbeginn else {
                     return nil
                 }
@@ -169,29 +170,6 @@ class RentenrechnerViewModel: ObservableObject {
                 return validierung.istGueltig ? validierung.warnung : "Ungültiger Rentenbeginn"
             }
             .assign(to: \.rentenbeginnFehler, on: self)
-            .store(in: &cancellables)
-    }
-    
-    // MARK: - Binding für Toggle "Früherer Rentenbeginn gewünscht"
-    
-    private func setupFruehererRentenbeginnBinding() {
-        $fruehererRentenbeginnGewuenscht
-            .removeDuplicates()
-            .sink { [weak self] isOn in
-                guard let self = self else { return }
-                if isOn {
-                    if let settings = self.appSettings, settings.abweichenderRentenbeginn == Date() {
-                        let startwert = settings.fruehesterAbschlagsfreierBeginn
-                        print("[ViewModel] Setze Startwert für früheren Rentenbeginn: \(startwert)")
-                        settings.abweichenderRentenbeginn = DateHelper.mitternachtStabil(fuer: startwert)
-                    }
-                } else {
-                    print("[ViewModel] Entferne früheren Rentenbeginn, Toggle aus")
-                    if let settings = self.appSettings {
-                        settings.abweichenderRentenbeginn = settings.regelaltersgrenze
-                    }
-                }
-            }
             .store(in: &cancellables)
     }
     
@@ -209,7 +187,7 @@ class RentenrechnerViewModel: ObservableObject {
     var aktuelleBerechnungsgrundlagen: String {
         let settings = appSettings ?? AppSettings()
         return """
-        Berechnungsgrundlagen \(settings.gueltigkeitsjahr):
+        Berechnungsgrundlagen \(settings.gueltigkeitsjahrText):
         • Durchschnittsentgelt: \(String(format: "%.0f€", settings.durchschnittsentgelt))
         • Rentenwert: \(String(format: "%.2f€", settings.rentenwert))
         • Beitragsbemessungsgrenze: \(String(format: "%.0f€", settings.beitragsbemessungsgrenze))
@@ -229,8 +207,6 @@ class RentenrechnerViewModel: ObservableObject {
         person.geburtsdatum = DateHelper.mitternachtStabil(fuer: person.geburtsdatum)
         savePersonData()
         
-        print("[ViewModel berechneRente] Aufruf mit abweichendem Rentenbeginn: \(String(describing: appSettings?.abweichenderRentenbeginn))")
-        
         withAnimation { isLoading = true }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
@@ -241,8 +217,6 @@ class RentenrechnerViewModel: ObservableObject {
                 appSettings: self.appSettings
             )
             
-            print("[ViewModel berechneRente] Ergebnis: zusätzliche RP = \(berechnetesErgebnis.zusaetzlicheRentenpunkte)")
-            
             withAnimation {
                 self.ergebnis = berechnetesErgebnis
                 self.selectedTab = 1
@@ -250,6 +224,21 @@ class RentenrechnerViewModel: ObservableObject {
             }
             self.berechneSzenarien()
         }
+    }
+
+    func aktualisiereBerechnungOhneNavigation() {
+        guard istEingabeGueltig else {
+            ergebnis = nil
+            szenarien = []
+            return
+        }
+
+        person.geburtsdatum = DateHelper.mitternachtStabil(fuer: person.geburtsdatum)
+        ergebnis = calculator.berechneRente(
+            fuer: person,
+            appSettings: appSettings
+        )
+        berechneSzenarien()
     }
     
     func berechneSzenarien() {
@@ -277,6 +266,10 @@ class RentenrechnerViewModel: ObservableObject {
             ergebnis = nil
             szenarien = []
             fruehererRentenbeginnGewuenscht = false
+            if let settings = appSettings {
+                settings.nutztAbweichendenRentenbeginn = false
+                settings.abweichenderRentenbeginn = settings.regelaltersgrenze
+            }
             showingSzenarien = false
             selectedTab = 0
             fehlerMeldung = nil
@@ -293,7 +286,6 @@ class RentenrechnerViewModel: ObservableObject {
             context.insert(person)
             try context.save()
         } catch {
-            print("Fehler beim Speichern der Person: \(error)")
             handleError(error)
         }
     }
@@ -313,7 +305,6 @@ class RentenrechnerViewModel: ObservableObject {
                 try context.save()
             }
         } catch {
-            print("Fehler beim Laden der Person: \(error)")
             handleError(error)
         }
     }
@@ -325,27 +316,17 @@ class RentenrechnerViewModel: ObservableObject {
             let savedSettings = try context.fetch(descriptor)
             if let settings = savedSettings.first {
                 self.appSettings = settings
+                self.fruehererRentenbeginnGewuenscht = settings.nutztAbweichendenRentenbeginn
             } else {
                 let newSettings = AppSettings()
                 context.insert(newSettings)
                 self.appSettings = newSettings
+                self.fruehererRentenbeginnGewuenscht = newSettings.nutztAbweichendenRentenbeginn
                 try context.save()
             }
             self.calculator = RentenCalculator(appSettings: self.appSettings)
         } catch {
-            print("Fehler beim Laden der AppSettings: \(error)")
             handleError(error)
-        }
-    }
-    
-    private func loadSampleDataIfNeeded() {
-        if person.monatlichesEinkommen == 0 && person.aktuelleRentenpunkte == 0 {
-            person.geschlecht = .maennlich
-            let sampleDate = Calendar.current.date(byAdding: .year, value: -45, to: Date()) ?? Date()
-            person.geburtsdatum = DateHelper.mitternachtStabil(fuer: sampleDate)
-            person.monatlichesEinkommen = 3500.0
-            person.aktuelleRentenpunkte = 25.5
-            savePersonData()
         }
     }
     
@@ -386,28 +367,21 @@ class RentenrechnerViewModel: ObservableObject {
         return ergebnis.alsExportDictionary()
     }
     
-    // MARK: - Scenario Comparison
-    
-    func vergleicheSzenarien(_ szenario1: RentenSzenario, _ szenario2: RentenSzenario) -> RentenVergleich {
-        szenario1.ergebnis.unterschiedZu(szenario2.ergebnis)
-    }
-    
-    func getBestesSzenario() -> RentenSzenario? {
-        szenarien.max { $0.ergebnis.tatsaechlicheBruttoRente < $1.ergebnis.tatsaechlicheBruttoRente }
-    }
-    
     // MARK: - UI Helpers
     
     func formatCurrency(_ amount: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.locale = Locale(identifier: "de_DE")
+        formatter.usesGroupingSeparator = false
         return formatter.string(from: NSNumber(value: amount)) ?? "€0,00"
     }
     
     func formatPercentage(_ percentage: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .percent
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.usesGroupingSeparator = false
         formatter.minimumFractionDigits = 1
         formatter.maximumFractionDigits = 1
         return formatter.string(from: NSNumber(value: percentage)) ?? "0,0%"
@@ -472,23 +446,19 @@ extension RentenrechnerViewModel {
     
     static func sampleViewModel(with context: ModelContext) -> RentenrechnerViewModel {
         let vm = RentenrechnerViewModel(modelContext: context)
-        vm.person.geschlecht = .weiblich
         let sampleDate = Calendar.current.date(byAdding: .year, value: -42, to: Date())!
         vm.person.geburtsdatum = DateHelper.mitternachtStabil(fuer: sampleDate)
         vm.person.monatlichesEinkommen = 4200.0
         vm.person.aktuelleRentenpunkte = 28.5
-        vm.person.aktuelleRente = 1250.0
         vm.savePersonData()
         return vm
     }
     
     func loadTestData() {
-        person.geschlecht = .maennlich
         let testDate1 = Calendar.current.date(byAdding: .year, value: -48, to: Date())!
         person.geburtsdatum = DateHelper.mitternachtStabil(fuer: testDate1)
         person.monatlichesEinkommen = 5500.0
         person.aktuelleRentenpunkte = 32.8
-        person.aktuelleRente = 1420.0
         fruehererRentenbeginnGewuenscht = true
         savePersonData()
     }

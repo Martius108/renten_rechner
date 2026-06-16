@@ -25,9 +25,9 @@ struct RentenErgebnis: Codable, Identifiable {
     let theoretischeBruttoRente: Double // Ohne Abschläge
     let abschlagProzent: Double
     let abschlagBetrag: Double
+    let zuschlagProzent: Double
+    let zuschlagBetrag: Double
     let tatsaechlicheBruttoRente: Double
-    let zusatzrenten: Double
-    let gesamtBruttoRente: Double
     let geschaetzteNettoRente: Double
     
     // Neue Abzugsfelder
@@ -59,8 +59,8 @@ struct RentenErgebnis: Codable, Identifiable {
         case id, berechnungsdatum,
              regelaltersgrenze, fruehesterAbschlagsfreierBeginn, tatsaechlicherRentenbeginn,
              aktuelleRentenpunkte, zusaetzlicheRentenpunkte, gesamtRentenpunkte,
-             theoretischeBruttoRente, abschlagProzent, abschlagBetrag, tatsaechlicheBruttoRente,
-             zusatzrenten, gesamtBruttoRente, geschaetzteNettoRente,
+             theoretischeBruttoRente, abschlagProzent, abschlagBetrag, zuschlagProzent,
+             zuschlagBetrag, tatsaechlicheBruttoRente, geschaetzteNettoRente,
              sozialabgabenBetrag, steuerBetrag, gesamtAbzuege,
              jahreVorRegelalter, monateVorRegelalter, verwendeterRentenwert
     }
@@ -91,20 +91,17 @@ struct RentenErgebnis: Codable, Identifiable {
         self.theoretischeBruttoRente = self.gesamtRentenpunkte * verwendeterRentenwert
         self.abschlagProzent = abschlagProzent
         self.abschlagBetrag = self.theoretischeBruttoRente * abschlagProzent
-        
-        // Basis: gesetzliche Rente nach Abschlag
-        var tatsaechlicheBruttoRente = self.theoretischeBruttoRente - self.abschlagBetrag
-        
-        // Witwenrente nach deiner Vorgabe addieren (nur wenn > 0)
-        let witwenrente = max(0.0, person.witwenrente)
-        if witwenrente > 0 {
-            tatsaechlicheBruttoRente += witwenrente
-        }
-        self.tatsaechlicheBruttoRente = tatsaechlicheBruttoRente
-        
-        // Zusatzrenten (unverändert)
-        self.zusatzrenten = person.gesamtZusatzrente
-        self.gesamtBruttoRente = self.tatsaechlicheBruttoRente + self.zusatzrenten
+
+        let monateNachRegelalter = DateHelper.monateZwischen(
+            startDatum: regelaltersgrenze,
+            endDatum: tatsaechlicherRentenbeginn,
+            includeCurrentPartialMonth: false
+        )
+        self.zuschlagProzent = tatsaechlicherRentenbeginn > regelaltersgrenze
+            ? Double(monateNachRegelalter) * 0.005
+            : 0.0
+        self.zuschlagBetrag = self.theoretischeBruttoRente * self.zuschlagProzent
+        self.tatsaechlicheBruttoRente = self.theoretischeBruttoRente - self.abschlagBetrag + self.zuschlagBetrag
         
         // Für Berechnungen stets mit einem konkreten Settings-Objekt arbeiten
         let s = appSettings ?? AppSettings()
@@ -131,7 +128,7 @@ struct RentenErgebnis: Codable, Identifiable {
         
         // 5. Nettorente
         let nettoRenteDRV = renteNachSozialabgaben - steuerLast
-        self.geschaetzteNettoRente = nettoRenteDRV + self.zusatzrenten
+        self.geschaetzteNettoRente = nettoRenteDRV
         
         // 6. Abzüge separat speichern
         self.sozialabgabenBetrag = sozialabgaben
@@ -149,6 +146,7 @@ struct RentenErgebnis: Codable, Identifiable {
 // MARK: - Computed Properties
 extension RentenErgebnis {
     var istAbschlagsfrei: Bool { abschlagProzent == 0.0 }
+    var hatZuschlag: Bool { zuschlagProzent > 0.0 }
     
     var rentenbeginnFormatted: String {
         let f = DateFormatter()
@@ -168,45 +166,26 @@ extension RentenErgebnis {
         String(format: "%.1f%%", abschlagProzent * 100)
     }
     
-    func rentenpunkteProJahr(monatlichesEinkommen: Double) -> Double {
-        // Fallback auf typischen Wert, falls settings fehlt
-        let entgelt = settings?.durchschnittsentgelt ?? 50_493.0
-        return monatlichesEinkommen * 12.0 / entgelt
-    }
-}
-
-// MARK: - Szenario Vergleiche
-extension RentenErgebnis {
     func vergleichSzenario(neuerRentenbeginn: Date, person: Person, calculator: RentenCalculator) -> RentenErgebnis {
         let tempSettings = calculator.appSettings.copy()
         tempSettings.abweichenderRentenbeginn = neuerRentenbeginn
         return calculator.berechneRente(fuer: person, appSettings: tempSettings)
     }
-    
-    func unterschiedZu(_ anderes: RentenErgebnis) -> RentenVergleich {
-        RentenVergleich(
-            urspruenglicheRente: self.gesamtBruttoRente,
-            neueRente: anderes.gesamtBruttoRente,
-            unterschiedMonatlich: anderes.gesamtBruttoRente - self.gesamtBruttoRente,
-            unterschiedJaehrlich: (anderes.gesamtBruttoRente - self.gesamtBruttoRente) * 12.0,
-            abschlagUnterschied: anderes.abschlagProzent - self.abschlagProzent
-        )
-    }
 }
 
-// MARK: - Vergleichsstruktur
-struct RentenVergleich {
-    let urspruenglicheRente: Double
-    let neueRente: Double
-    let unterschiedMonatlich: Double
-    let unterschiedJaehrlich: Double
-    let abschlagUnterschied: Double
-    
-    var istBesser: Bool { unterschiedMonatlich > 0 }
-    
-    var unterschiedFormatted: String {
-        let p = unterschiedMonatlich >= 0 ? "+" : ""
-        return "\(p)\(String(format: "%.2f", unterschiedMonatlich))€"
+extension RentenErgebnis {
+    static func empty(for person: Person, appSettings: AppSettings) -> RentenErgebnis {
+        RentenErgebnis(
+            person: person,
+            regelaltersgrenze: appSettings.regelaltersgrenze,
+            fruehesterAbschlagsfreierBeginn: appSettings.fruehesterAbschlagsfreierBeginn,
+            tatsaechlicherRentenbeginn: appSettings.abweichenderRentenbeginn ?? appSettings.regelaltersgrenze,
+            aktuelleRentenpunkte: max(0, person.aktuelleRentenpunkte),
+            zusaetzlicheRentenpunkte: 0,
+            abschlagProzent: 0,
+            verwendeterRentenwert: appSettings.rentenwert,
+            appSettings: appSettings
+        )
     }
 }
 
@@ -219,8 +198,6 @@ extension RentenErgebnis {
             "regelaltersgrenze": regelalterFormatted,
             "gesamtRentenpunkte": String(format: "%.2f", gesamtRentenpunkte),
             "bruttoRenteGesetzlich": String(format: "%.2f€", tatsaechlicheBruttoRente),
-            "zusatzrenten": String(format: "%.2f€", zusatzrenten),
-            "gesamtBruttoRente": String(format: "%.2f€", gesamtBruttoRente),
             "gesamtAbzuege": String(format: "%.2f€", gesamtAbzuege),
             "nettoRente": String(format: "%.2f€", geschaetzteNettoRente),
             "abschlag": istAbschlagsfrei ? "Kein Abschlag" : abschlagFormatted,
@@ -257,18 +234,20 @@ extension RentenErgebnis {
         if !istAbschlagsfrei {
             r += "\nAbschlag (\(abschlagFormatted)): -\(String(format: "%.2f€", abschlagBetrag))"
         }
+        if hatZuschlag {
+            r += "\nZuschlag (\(String(format: "%.1f%%", zuschlagProzent * 100))): +\(String(format: "%.2f€", zuschlagBetrag))"
+        }
         r += "\nTatsächliche Bruttorente: \(String(format: "%.2f€", tatsaechlicheBruttoRente))"
         r += "\nSumme Abzüge: -\(String(format: "%.2f€", gesamtAbzuege))"
-        if zusatzrenten > 0 {
-            r += "\n➕ Zusatzrenten: \(String(format: "%.2f€", zusatzrenten))"
-        }
-        r += "\n\n💰 NETTOGESAMTRENTE: \(String(format: "%.2f€", geschaetzteNettoRente))"
+        r += "\n\n💰 GESCHÄTZTE NETTORENTE: \(String(format: "%.2f€", geschaetzteNettoRente))"
         
         r += """
         
         ⚖️ RECHTLICHE HINWEISE
         Diese Berechnung ist unverbindlich und basiert auf den
-        Werten von \(jahr) bzw. den von Ihnen eingegebenen Werten. 
+        Werten von \(jahr) bzw. den von Ihnen eingegebenen Werten.
+        Zusatzrenten, Betriebsrenten, Hinterbliebenenrenten und
+        Hinzuverdienste sind nicht enthalten.
         Für eine verbindliche Auskunft wenden Sie sich bitte
         an die Deutsche Rentenversicherung.
         

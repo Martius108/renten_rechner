@@ -56,6 +56,7 @@ struct SettingsView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
+                .scrollDismissesKeyboard(.interactively)
 
                 if showSavedToast {
                     SaveToast()
@@ -74,9 +75,7 @@ struct SettingsView: View {
                         // Speichere nur, wenn ein Datensatz existiert
                         if !settings.isEmpty {
                             try? context.save()
-                            // Tastatur schließen
-                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                                            to: nil, from: nil, for: nil)
+                            hideKeyboard()
                             showSuccessToast()
                         }
                     }
@@ -115,18 +114,19 @@ struct EditableSettingsContent: View {
     }
 
     var body: some View {
-        rentenparameterSection
-        steuernUndAbgabenSection
-        werteSection
-        infoSection
-        .toolbar {
-            // "Fertig" innerhalb der Tastatur-Leiste
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Fertig") { saveAndDismiss() }
-                    .font(.body.weight(.semibold))
-            }
+        Group {
+            rentenparameterSection
+            steuernUndAbgabenSection
+            infoSection
         }
+            .toolbar {
+                // "Fertig" innerhalb der Tastatur-Leiste
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Fertig") { saveAndDismiss() }
+                        .font(.body.weight(.semibold))
+                }
+            }
     }
 
     // MARK: - Sections
@@ -165,51 +165,35 @@ struct EditableSettingsContent: View {
                 field: .steuerfreibetrag
             )
 
-            numberField(title: "Steuerpflicht-Quote (0.0 - 1.0)", suffix: "",
+            numberField(title: "Steuerpflicht-Quote", suffix: "",
                         binding: $setting.steuerpflichtQuote, field: .steuerpflichtQuote)
             Text("Aktuell: \(String(format: "%.1f", setting.steuerpflichtQuote * 100))%")
                 .font(.caption)
                 .foregroundColor(.blue)
 
-            numberField(title: "Durchschnittlicher Steuersatz (0.0 - 1.0)", suffix: "",
+            numberField(title: "Durchschnittlicher Steuersatz", suffix: "",
                         binding: $setting.durchschnittlicherSteuersatz, field: .durchschnittlicherSteuersatz)
             Text("Aktuell: \(String(format: "%.1f", setting.durchschnittlicherSteuersatz * 100))%")
                 .font(.caption)
                 .foregroundColor(.blue)
 
-            numberField(title: "Krankenkassen-Beitragssatz (0.0 - 1.0)", suffix: "",
+            numberField(title: "Krankenkassen-Beitragssatz", suffix: "",
                         binding: $setting.krankenkassenBeitragssatz, field: .kvSatz)
             Text("Aktuell: \(String(format: "%.1f", setting.krankenkassenBeitragssatz * 100))%")
                 .font(.caption)
                 .foregroundColor(.blue)
 
-            numberField(title: "KV-Zusatzbeitrag (0.0 - 1.0)", suffix: "",
+            numberField(title: "KV-Zusatzbeitrag", suffix: "",
                         binding: $setting.krankenkassenZusatzbeitrag, field: .kvZusatz)
             Text("Aktuell: \(String(format: "%.1f", setting.krankenkassenZusatzbeitrag * 100))%")
                 .font(.caption)
                 .foregroundColor(.blue)
 
-            numberField(title: "Pflegeversicherung (0.0 - 1.0)", suffix: "",
+            numberField(title: "Pflegeversicherung", suffix: "",
                         binding: $setting.pflegeversicherungsBeitrag, field: .pvSatz)
             Text("Aktuell: \(String(format: "%.1f", setting.pflegeversicherungsBeitrag * 100))% (3,6% mit Kindern / 4,2% kinderlos)")
                 .font(.caption)
                 .foregroundColor(.blue)
-        }
-    }
-
-    private var werteSection: some View {
-        Section("Berechnete Werte") {
-            if let e = viewModel.ergebnis {
-                let basis = e.tatsaechlicheBruttoRente > 0 ? e.tatsaechlicheBruttoRente : e.gesamtBruttoRente
-                let proz = basis > 0 ? (e.sozialabgabenBetrag / basis) : 0.0
-                rowLabelValue(
-                    "Sozialabgaben",
-                    value: String(format: "%.1f%%", proz * 100.0),
-                    valueColor: .blue
-                )
-            } else {
-                rowLabelValue("Sozialabgaben", value: "–", valueColor: .secondary)
-            }
         }
     }
 
@@ -224,23 +208,13 @@ struct EditableSettingsContent: View {
 
     // MARK: - Row-Builders
 
-    private func rowLabelValue(_ title: String, value: String, valueColor: Color = .secondary) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-            Spacer(minLength: 8)
-            Text(value)
-                .foregroundColor(valueColor)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-        }
-        .frame(minHeight: 44)
-    }
-
     private func numberField(title: String, suffix: String, binding: Binding<Double>, field: Field) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(title)
-            Spacer(minLength: 8)
-            TextField(title, value: binding, format: .number)
+                .lineLimit(2)
+                .layoutPriority(1)
+            Spacer(minLength: 12)
+            TextField(title, value: binding, format: .number.grouping(.never))
                 .multilineTextAlignment(.trailing)
                 .keyboardType(.decimalPad)
                 .focused($focusedField, equals: field)
@@ -248,8 +222,10 @@ struct EditableSettingsContent: View {
                 .onSubmit { saveAndDismiss() }
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .frame(width: 76)
             Text(suffix)
                 .foregroundColor(.secondary)
+                .frame(minWidth: suffix.isEmpty ? 0 : 10, alignment: .leading)
         }
         .frame(minHeight: 44)
     }

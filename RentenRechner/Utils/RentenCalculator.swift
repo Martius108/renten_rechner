@@ -34,7 +34,7 @@ class RentenCalculator {
         
         // 1. Validierung
         guard person.isValid else {
-            fatalError("Person-Daten sind nicht valide. Validierung sollte vor Berechnung erfolgen.")
+            return RentenErgebnis.empty(for: person, appSettings: appSettings ?? self.appSettings)
         }
         
         // 2. Regelaltersgrenze und frühester abschlagsfreier Beginn aus AppSettings
@@ -44,7 +44,7 @@ class RentenCalculator {
         
         // Normiere auf Monatsanfang
         guard let gewuenschterRentenbeginn = s.abweichenderRentenbeginn else {
-            fatalError("Abweichender Rentenbeginn ist nicht gesetzt")
+            return RentenErgebnis.empty(for: person, appSettings: s)
         }
 
         let tatsaechlicherRentenbeginn = DateHelper.naechsterMonatserster(
@@ -93,9 +93,6 @@ class RentenCalculator {
         result.debugCappedBrutto = zusRes.cappedBrutto
         result.debugEntgeltpunkteProJahr = zusRes.epProJahr
         result.debugZusRP = zusRes.zusaetzlicheRP
-        
-        print("[berechneRente] Monate bis Rente: \(zusRes.monateBisRente), Jahre bis Rente: \(zusRes.jahreBisRente)")
-        print("[berechneRente] tatsaechlicherRentenbeginn: \(tatsaechlicherRentenbeginn)")
         
         return result
     }
@@ -193,65 +190,89 @@ class RentenCalculator {
         
         let regelaltersgrenze = appSettings.regelaltersgrenze
         let fruehesterAbschlagsfreierBeginn = appSettings.fruehesterAbschlagsfreierBeginn
+        let aktuellerBeginn = appSettings.abweichenderRentenbeginn ?? regelaltersgrenze
         
-        // Szenario 1: Regelaltersgrenze
-        let regelszenario = berechneRente(fuer: person, appSettings: appSettings)
-        szenarien.append(RentenSzenario(
-            name: "Regelaltersgrenze",
-            beschreibung: "Pünktlich zur gesetzlichen Regelaltersgrenze",
-            ergebnis: regelszenario,
-            empfehlung: .neutral
-        ))
-        
-        // Szenario 2: Frühester abschlagsfreier Beginn (45 Jahre)
-        if fruehesterAbschlagsfreierBeginn < regelaltersgrenze {
-            let tempSettings = appSettings
-            tempSettings.abweichenderRentenbeginn = fruehesterAbschlagsfreierBeginn
-            let fruehszenario = berechneRente(fuer: person, appSettings: tempSettings)
-            szenarien.append(RentenSzenario(
-                name: "Abschlagsfrei früher",
-                beschreibung: "Frühester Beginn ohne Abschläge (45 Beitragsjahre vorausgesetzt)",
-                ergebnis: fruehszenario,
-                empfehlung: .positiv
-            ))
+        func normalisierterBeginn(_ date: Date) -> Date {
+            DateHelper.naechsterMonatserster(ab: DateHelper.mitternachtStabil(fuer: date))
         }
         
-        // Szenario 3: Mit 63 Jahren (falls möglich)
-        if let alter63 = DateHelper.addiere(jahre: 63, zu: normGeburt) {
-            if alter63 > DateHelper.mitternachtStabil(fuer: Date()) && alter63 > fruehesterAbschlagsfreierBeginn {
-                let tempSettings = appSettings
-                tempSettings.abweichenderRentenbeginn = DateHelper.naechsterMonatserster(ab: alter63)
-                let szenario63 = berechneRente(fuer: person, appSettings: tempSettings)
-                szenarien.append(RentenSzenario(
-                    name: "Mit 63 Jahren",
-                    beschreibung: "Rentenbeginn mit 63 Jahren (mit Abschlägen)",
-                    ergebnis: szenario63,
-                    empfehlung: .negativ
-                ))
+        func enthaeltSzenario(fuer rentenbeginn: Date) -> Bool {
+            let normalisiert = normalisierterBeginn(rentenbeginn)
+            return szenarien.contains {
+                normalisierterBeginn($0.ergebnis.tatsaechlicherRentenbeginn) == normalisiert
             }
         }
         
-        // Szenario 4: Ein Jahr nach Regelaltersgrenze
-        if let einJahrSpaeter = DateHelper.addiere(jahre: 1, zu: regelaltersgrenze) {
-            let tempSettings = appSettings
-            tempSettings.abweichenderRentenbeginn = DateHelper.naechsterMonatserster(ab: einJahrSpaeter)
-            let spaeterSzenario = berechneRente(fuer: person, appSettings: tempSettings)
+        func szenarioHinzufuegen(
+            name: String,
+            beschreibung: String,
+            rentenbeginn: Date,
+            empfehlung: SzenarioEmpfehlung
+        ) {
+            guard !enthaeltSzenario(fuer: rentenbeginn) else { return }
+            let tempSettings = appSettings.copy()
+            tempSettings.abweichenderRentenbeginn = rentenbeginn
+            let ergebnis = berechneRente(fuer: person, appSettings: tempSettings)
             szenarien.append(RentenSzenario(
+                name: name,
+                beschreibung: beschreibung,
+                ergebnis: ergebnis,
+                empfehlung: empfehlung
+            ))
+        }
+        
+        // Szenario 1: aktuelle Nutzer-Auswahl
+        szenarioHinzufuegen(
+            name: "Aktuelle Auswahl",
+            beschreibung: "Der aktuell gewählte Rentenbeginn",
+            rentenbeginn: aktuellerBeginn,
+            empfehlung: .neutral
+        )
+        
+        // Vergleich: Regelaltersgrenze
+        szenarioHinzufuegen(
+            name: "Regelaltersgrenze",
+            beschreibung: "Pünktlich zur gesetzlichen Regelaltersgrenze",
+            rentenbeginn: regelaltersgrenze,
+            empfehlung: .neutral
+        )
+        
+        // Vergleich: Frühester abschlagsfreier Beginn (45 Jahre)
+        if fruehesterAbschlagsfreierBeginn < regelaltersgrenze {
+            szenarioHinzufuegen(
+                name: "Abschlagsfrei früher",
+                beschreibung: "Frühester Beginn ohne Abschläge bei erfüllten 45 Versicherungsjahren",
+                rentenbeginn: fruehesterAbschlagsfreierBeginn,
+                empfehlung: .positiv
+            )
+        }
+        
+        // Vergleich: Mit 63 Jahren (falls möglich)
+        if let alter63 = DateHelper.addiere(jahre: 63, zu: normGeburt) {
+            if alter63 > DateHelper.mitternachtStabil(fuer: Date()) {
+                szenarioHinzufuegen(
+                    name: "Mit 63 Jahren",
+                    beschreibung: "Rentenbeginn mit 63 Jahren (mit Abschlägen)",
+                    rentenbeginn: alter63,
+                    empfehlung: .negativ
+                )
+            }
+        }
+        
+        // Vergleich: Ein Jahr nach Regelaltersgrenze
+        if let einJahrSpaeter = DateHelper.addiere(jahre: 1, zu: regelaltersgrenze) {
+            szenarioHinzufuegen(
                 name: "Ein Jahr später",
                 beschreibung: "Rentenbeginn ein Jahr nach Regelaltersgrenze",
-                ergebnis: spaeterSzenario,
+                rentenbeginn: einJahrSpaeter,
                 empfehlung: .positiv
-            ))
+            )
         }
         
         return szenarien
     }
     
     // MARK: - Hilfsfunktionen
-    
-    func berechneErforderlichesEinkommen(fuer rentenpunkte: Double) -> Double {
-        return rentenpunkte * appSettings.durchschnittsentgelt
-    }
     
     func validiereRentenbeginn(datum: Date, geburtsdatum: Date) -> RentenbeginnValidierung {
         let cal = DateHelper.stableCalendar
@@ -309,24 +330,4 @@ enum SzenarioEmpfehlung {
 struct RentenbeginnValidierung {
     let istGueltig: Bool
     let warnung: String?
-}
-
-// MARK: - Extensions für bessere Usability
-
-extension RentenCalculator {
-    
-    func schnellberechnung(fuer person: Person) -> Double {
-        let ergebnis = berechneRente(fuer: person)
-        return ergebnis.tatsaechlicheBruttoRente
-    }
-    
-    func einflussGehaltsErhoehung(person: Person, neuesEinkommen: Double) -> Double {
-        let urspruenglicheRente = schnellberechnung(fuer: person)
-        
-        let personMitErhoehung = person
-        personMitErhoehung.monatlichesEinkommen = neuesEinkommen
-        let neueRente = schnellberechnung(fuer: personMitErhoehung)
-        
-        return neueRente - urspruenglicheRente
-    }
 }

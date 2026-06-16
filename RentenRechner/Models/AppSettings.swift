@@ -10,7 +10,7 @@ import SwiftData
 
 @Model
 class AppSettings {
-    var gueltigkeitsjahr: Int = Calendar.current.component(.year, from: Date())
+    var gueltigkeitsjahr: Int = 2025
     var durchschnittsentgelt: Double = 50493.0
     var rentenwert: Double = 40.79
     var beitragsbemessungsgrenze: Double = 96600.0
@@ -27,10 +27,15 @@ class AppSettings {
         steuerpflichtQuote * (1.0 - durchschnittlicherSteuersatz)
     }
 
+    var gueltigkeitsjahrText: String {
+        String(gueltigkeitsjahr)
+    }
+
     // Neue Properties für Regelaltersgrenze und frühesten abschlagsfreien Beginn
     var regelaltersgrenze: Date = Date()
     var fruehesterAbschlagsfreierBeginn: Date = Date()
     var abweichenderRentenbeginn: Date? = nil
+    var nutztAbweichendenRentenbeginn: Bool = false
 
     init() {
         // Beispiel-Geburtsdatum (60 Jahre vor heute)
@@ -49,8 +54,7 @@ class AppSettings {
         self.regelaltersgrenze = neueRegelaltersgrenze
         self.fruehesterAbschlagsfreierBeginn = neuerFruehesterAbschlagsfreierBeginn
 
-        // Nur initial abweichenderRentenbeginn setzen, wenn er noch nicht gesetzt oder gleich Regelaltersgrenze
-        if self.abweichenderRentenbeginn == nil || self.abweichenderRentenbeginn == self.regelaltersgrenze {
+        if !nutztAbweichendenRentenbeginn || self.abweichenderRentenbeginn == nil {
             self.abweichenderRentenbeginn = neueRegelaltersgrenze
         }
     }
@@ -74,6 +78,7 @@ extension AppSettings {
         copy.regelaltersgrenze = self.regelaltersgrenze
         copy.fruehesterAbschlagsfreierBeginn = self.fruehesterAbschlagsfreierBeginn
         copy.abweichenderRentenbeginn = self.abweichenderRentenbeginn
+        copy.nutztAbweichendenRentenbeginn = self.nutztAbweichendenRentenbeginn
         return copy
     }
 }

@@ -54,11 +54,11 @@ struct ErgebnisView: View {
                         .font(.headline)
                         .foregroundColor(.secondary)
                     
-                    Text(viewModel.formatCurrency(ergebnis.gesamtBruttoRente))
+                    Text(viewModel.formatCurrency(ergebnis.tatsaechlicheBruttoRente))
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundColor(.primary)
                     
-                    Text("Brutto pro Monat (inkl. Zusatzrenten)")
+                    Text("Gesetzliche Bruttorente pro Monat")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -193,6 +193,14 @@ struct ErgebnisView: View {
                             textColor: .red
                         )
                     }
+
+                    if ergebnis.hatZuschlag {
+                        DetailRow(
+                            label: "+ Zuschlag (\(viewModel.formatPercentage(ergebnis.zuschlagProzent)))",
+                            value: viewModel.formatCurrency(ergebnis.zuschlagBetrag),
+                            textColor: .green
+                        )
+                    }
                     
                     DetailRow(
                         label: "= Gesetzliche Bruttorente",
@@ -213,31 +221,14 @@ struct ErgebnisView: View {
                         textColor: .red
                     )
                     
-                    if ergebnis.zusatzrenten > 0 {
-                        DetailRow(
-                            label: "+ Zusatzrenten",
-                            value: viewModel.formatCurrency(ergebnis.zusatzrenten),
-                            textColor: .green
-                        )
-                        
-                        Divider()
-                        
-                        DetailRow(
-                            label: "= Gesamte Nettorente",
-                            value: viewModel.formatCurrency(ergebnis.geschaetzteNettoRente),
-                            isHighlighted: true,
-                            textColor: .primary
-                        )
-                    } else {
-                        Divider()
-                        
-                        DetailRow(
-                            label: "= Nettorente",
-                            value: viewModel.formatCurrency(ergebnis.geschaetzteNettoRente),
-                            isHighlighted: true,
-                            textColor: .primary
-                        )
-                    }
+                    Divider()
+                    
+                    DetailRow(
+                        label: "= Geschätzte Nettorente",
+                        value: viewModel.formatCurrency(ergebnis.geschaetzteNettoRente),
+                        isHighlighted: true,
+                        textColor: .primary
+                    )
                 }
             }
             .padding()
@@ -323,7 +314,7 @@ struct ErgebnisView: View {
                         icon: "star.circle",
                         title: "Frühester abschlagsfreier Beginn",
                         date: ergebnis.fruehesterAbschlagsfreierBeginn,
-                        description: "Bei 45 Beitragsjahren",
+                        description: "Bei erfüllten 45 Versicherungsjahren",
                         isHighlighted: false
                     )
                     
@@ -355,7 +346,7 @@ struct ErgebnisView: View {
                         .fontWeight(.semibold)
                 }
                 
-                Text("Erfahren Sie mehr über Grundrente, Grundsicherung und weitere gesetzliche Hintergründe zur Rentenberechnung.")
+                Text("Erfahren Sie mehr über Grundrente, Grundsicherung und weitere gesetzliche Hintergründe zur Altersrente.")
                     .font(.body)
                     .foregroundColor(.secondary)
                 
@@ -394,6 +385,7 @@ struct ErgebnisView: View {
                 
                 Text("""
                 Diese Berechnung ist unverbindlich und basiert auf den aktuellen Werten bzw. den von Ihnen eingegebenen Einstellungen.
+                Zusatzrenten, Betriebsrenten, Hinterbliebenenrenten und Hinzuverdienste sind nicht enthalten.
                 Die tatsächliche Rentenhöhe kann aufgrund von Gesetzesänderungen, Anpassungen der Rentenwerte oder individuellen Faktoren abweichen.
                 
                 Für eine verbindliche Auskunft über Ihre Rente wenden Sie sich an die Deutsche Rentenversicherung.
