@@ -1,36 +1,36 @@
 # RentenRechner Deutschland
 
-RentenRechner Deutschland is an iOS app for estimating German statutory old-age pension amounts.
+RentenRechner Deutschland ist eine iOS-App zur groben Berechnung der gesetzlichen Altersrente in Deutschland.
 
-The app helps users enter basic pension data, estimate future pension points, compare pension start scenarios, and understand how deductions may affect the projected monthly pension.
+Die App hilft dabei, vorhandene Rentenpunkte, monatliches Einkommen und einen gewünschten Rentenbeginn einzugeben, zukünftige Rentenpunkte zu schätzen und verschiedene Rentenbeginn-Szenarien miteinander zu vergleichen.
 
-## Features
+## Funktionen
 
-- Estimate statutory pension based on existing pension points and monthly income
-- Calculate additional pension points using the stored annual average earnings and contribution ceiling
-- Compare pension start scenarios, including regular retirement age, earlier retirement with deductions, and earlier retirement that may be possible for especially long-term insured persons
-- Show gross pension, deductions, estimated taxes, and an estimated net pension
-- Explain the 45-year waiting period separately, because the app does not verify individual insurance histories
-- Include information about Grundrente, Grundsicherung, and important legal limitations
-- Store entered data locally on the device
+- Schätzung der gesetzlichen Altersrente auf Basis vorhandener Rentenpunkte und monatlichen Einkommens
+- Berechnung zusätzlicher Rentenpunkte mit hinterlegtem Durchschnittsentgelt und Beitragsbemessungsgrenze
+- Vergleich verschiedener Rentenbeginn-Szenarien, darunter Regelaltersgrenze, früherer Rentenbeginn mit Abschlag und rechnerisch früherer Beginn bei möglicher 45-jähriger Wartezeit
+- Anzeige von Bruttorente, Abschlägen, geschätzten Steuern, Sozialabgaben und geschätzter Nettorente
+- Separate Hinweise zur 45-jährigen Wartezeit, da die App individuelle Versicherungsverläufe nicht prüfen kann
+- Informationen zu Grundrente, Grundsicherung und rechtlichen Grenzen der Berechnung
+- Lokale Speicherung der eingegebenen Daten auf dem Gerät
 
-## Calculation Basis
+## Berechnungsgrundlagen
 
-The app contains manually maintained German pension, tax, and social insurance values for 2026.
+Die App enthält manuell gepflegte Werte für Rente, Steuern und Sozialabgaben für den Datenstand 2026.
 
-The stored pension value is labeled as the value from July 1, 2026. The value should be checked again after final official publication.
+Der Rentenwert ist als Wert ab dem 01.07.2026 hinterlegt. Dieser Wert sollte nach endgültiger offizieller Veröffentlichung noch einmal geprüft werden.
 
-Important: The app is intended for rough orientation only. It does not provide legal, pension, tax, or financial advice.
+Wichtig: Die App dient nur der groben Orientierung. Sie ersetzt keine Rechts-, Renten-, Steuer- oder Finanzberatung.
 
-## Privacy
+## Datenschutz
 
-The privacy policy is available here:
+Die Datenschutzerklärung ist hier verfügbar:
 
-- [Privacy Policy](docs/privacy.md)
-- [Privacy Policy HTML](docs/privacy.html)
+- [Datenschutzerklärung](docs/privacy.md)
+- [Datenschutzerklärung HTML](docs/privacy.html)
 
 ## Repository
 
-GitHub repository:
+GitHub-Repository:
 
 - [Martius108/renten_rechner](https://github.com/Martius108/renten_rechner)

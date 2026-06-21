@@ -1,49 +1,49 @@
-# Privacy Policy for RentenRechner Deutschland
+# Datenschutzerklärung für RentenRechner Deutschland
 
-Last updated: June 21, 2026
+Stand: 21. Juni 2026
 
-RentenRechner Deutschland is an iOS app by Martin Lanius. This privacy policy explains what information the app uses and why.
+RentenRechner Deutschland ist eine iOS-App von Martin Lanius. Diese Datenschutzerklärung erklärt, welche Informationen die App verwendet und warum.
 
-## Information Used by the App
+## Von der App verwendete Informationen
 
-RentenRechner Deutschland may store pension-related input locally on your device. This can include your birth date, monthly income, current pension points, and selected pension start settings.
+RentenRechner Deutschland kann rentenbezogene Eingaben lokal auf Ihrem Gerät speichern. Dazu können Geburtsdatum, monatliches Einkommen, vorhandene Rentenpunkte und Einstellungen zum gewünschten Rentenbeginn gehören.
 
-This information is used to estimate German statutory pension amounts and compare pension start scenarios inside the app.
+Diese Informationen werden verwendet, um innerhalb der App eine grobe Schätzung der gesetzlichen Altersrente zu berechnen und verschiedene Rentenbeginn-Szenarien zu vergleichen.
 
-## Pension Calculation Data
+## Berechnungsdaten
 
-The app uses stored calculation values such as pension value, average earnings, contribution ceiling, tax assumptions, health insurance contribution, additional health insurance contribution, and long-term care insurance contribution.
+Die App verwendet hinterlegte Berechnungswerte wie Rentenwert, Durchschnittsentgelt, Beitragsbemessungsgrenze, Steuerannahmen, Krankenversicherungsbeitrag, Zusatzbeitrag und Pflegeversicherungsbeitrag.
 
-These values are stored inside the app and may be updated when the app is updated.
+Diese Werte sind in der App gespeichert und können mit App-Updates aktualisiert werden.
 
-## Data Storage
+## Datenspeicherung
 
-Your entered pension data is stored locally on your device. RentenRechner Deutschland does not operate its own server for this data.
+Ihre eingegebenen Rentendaten werden lokal auf Ihrem Gerät gespeichert. RentenRechner Deutschland betreibt keinen eigenen Server für diese Daten.
 
-## Tracking and Advertising
+## Tracking und Werbung
 
-RentenRechner Deutschland does not use third-party advertising SDKs.
+RentenRechner Deutschland verwendet keine Drittanbieter-Werbe-SDKs.
 
-RentenRechner Deutschland does not track you across apps or websites owned by other companies.
+RentenRechner Deutschland verfolgt Sie nicht über Apps oder Websites anderer Unternehmen hinweg.
 
-RentenRechner Deutschland does not sell your personal data.
+RentenRechner Deutschland verkauft keine personenbezogenen Daten.
 
-## Data Sharing
+## Weitergabe von Daten
 
-RentenRechner Deutschland does not share your locally saved pension data with data brokers or advertising networks.
+RentenRechner Deutschland gibt lokal gespeicherte Rentendaten nicht an Datenhändler oder Werbenetzwerke weiter.
 
-The app does not send your pension inputs to a developer-operated server.
+Die App sendet Ihre Renteneingaben nicht an einen vom Entwickler betriebenen Server.
 
-## Legal and Financial Disclaimer
+## Rechtlicher und finanzieller Hinweis
 
-RentenRechner Deutschland provides non-binding estimates for rough orientation only. The app does not provide legal, pension, tax, or financial advice.
+RentenRechner Deutschland stellt unverbindliche Schätzungen zur groben Orientierung bereit. Die App bietet keine Rechts-, Renten-, Steuer- oder Finanzberatung.
 
-For binding pension information, please contact the Deutsche Rentenversicherung or a qualified advisor.
+Für verbindliche Rentenauskünfte wenden Sie sich bitte an die Deutsche Rentenversicherung oder eine qualifizierte Beratungsstelle.
 
-## Contact
+## Kontakt
 
-For privacy questions, contact:
+Bei Datenschutzfragen kontaktieren Sie bitte:
 
 martin@example.com
 
-Please replace this email address with the correct support or privacy contact before submitting the app to the App Store.
+Bitte ersetzen Sie diese E-Mail-Adresse vor der Einreichung im App Store durch die korrekte Support- oder Datenschutzadresse.
