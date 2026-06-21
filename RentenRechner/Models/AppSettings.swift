@@ -10,17 +10,27 @@ import SwiftData
 
 @Model
 class AppSettings {
-    var gueltigkeitsjahr: Int = 2025
-    var durchschnittsentgelt: Double = 50493.0
-    var rentenwert: Double = 40.79
-    var beitragsbemessungsgrenze: Double = 96600.0
+    static let datenstandJahr2026 = 2026
+    static let durchschnittsentgelt2026 = 51944.0
+    static let rentenwertAbJuli2026 = 42.52
+    static let beitragsbemessungsgrenze2026 = 101400.0
+    static let grundfreibetrag2026 = 12348.0
+    static let steuerpflichtQuote2026 = 0.84
+    static let krankenkassenBeitragssatz2026 = 0.146
+    static let krankenkassenZusatzbeitrag2026 = 0.029
+    static let pflegeversicherungsBeitrag2026 = 0.036
 
-    var steuerfreibetrag: Double = 12096.0
-    var steuerpflichtQuote: Double = 0.835
+    var gueltigkeitsjahr: Int = 2026
+    var durchschnittsentgelt: Double = 51944.0
+    var rentenwert: Double = 42.52
+    var beitragsbemessungsgrenze: Double = 101400.0
+
+    var steuerfreibetrag: Double = 12348.0
+    var steuerpflichtQuote: Double = 0.84
     var durchschnittlicherSteuersatz: Double = 0.15
 
     var krankenkassenBeitragssatz: Double = 0.146
-    var krankenkassenZusatzbeitrag: Double = 0.025
+    var krankenkassenZusatzbeitrag: Double = 0.029
     var pflegeversicherungsBeitrag: Double = 0.036
 
     var nettoFaktorSchaetzung: Double {
@@ -57,6 +67,32 @@ class AppSettings {
         if !nutztAbweichendenRentenbeginn || self.abweichenderRentenbeginn == nil {
             self.abweichenderRentenbeginn = neueRegelaltersgrenze
         }
+    }
+
+    @discardableResult
+    func aktualisiereGesetzlicheStandardwerteAuf2026FallsNoetig() -> Bool {
+        let enthaeltAlteStandardwerte =
+            gueltigkeitsjahr < Self.datenstandJahr2026 ||
+            abs(rentenwert - 40.79) < 0.001 ||
+            abs(durchschnittsentgelt - 50493.0) < 0.001 ||
+            abs(beitragsbemessungsgrenze - 96600.0) < 0.001 ||
+            abs(steuerfreibetrag - 12096.0) < 0.001 ||
+            abs(steuerfreibetrag - 12196.0) < 0.001 ||
+            abs(steuerpflichtQuote - 0.835) < 0.0001 ||
+            abs(krankenkassenZusatzbeitrag - 0.025) < 0.0001
+
+        guard enthaeltAlteStandardwerte else { return false }
+
+        gueltigkeitsjahr = Self.datenstandJahr2026
+        durchschnittsentgelt = Self.durchschnittsentgelt2026
+        rentenwert = Self.rentenwertAbJuli2026
+        beitragsbemessungsgrenze = Self.beitragsbemessungsgrenze2026
+        steuerfreibetrag = Self.grundfreibetrag2026
+        steuerpflichtQuote = Self.steuerpflichtQuote2026
+        krankenkassenBeitragssatz = Self.krankenkassenBeitragssatz2026
+        krankenkassenZusatzbeitrag = Self.krankenkassenZusatzbeitrag2026
+        pflegeversicherungsBeitrag = Self.pflegeversicherungsBeitrag2026
+        return true
     }
 }
 

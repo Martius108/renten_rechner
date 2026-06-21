@@ -220,7 +220,7 @@ struct RentenoptionenSection: View {
                     VStack(alignment: .leading, spacing: 8) {
                         if let appSettings = viewModel.appSettings {
                             let beginnDatum = appSettings.fruehesterAbschlagsfreierBeginn
-                            Text("Frühester abschlagsfreier Beginn bei 45 Versicherungsjahren: \(beginnDatum.deutscheFormatierung)")
+                            Text("Frühester möglicher Beginn ohne Abschlag: \(beginnDatum.deutscheFormatierung) - nur bei erfüllter 45-jähriger Wartezeit")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -277,17 +277,22 @@ private struct ZusatzinformationenAbschlagsfrei: View {
                 let prozent = Double(monateVorRegelalter) * 0.3
                 WarningRow(text: "⚠️ \(monateVorRegelalter) Monate vor Regelalter = bis zu \(String(format: "%.1f", prozent))% Abschlag")
             } else if gewuenschterBeginnNorm >= fruehesterAbschlagsfrei && gewuenschterBeginnNorm < regelalter {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text("✅ Abschlagsfreier Rentenbeginn bei erfüllten 45 Versicherungsjahren")
-                        .font(.caption)
-                        .foregroundColor(.green)
+                NavigationLink(destination: InfoView().environmentObject(viewModel)) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "questionmark.circle")
+                        Text("Rechnerisch ohne Abschlag möglich - 45-jährige Wartezeit wird nicht geprüft")
+                            .font(.caption)
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                    }
+                    .foregroundColor(.orange)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.orange.opacity(0.12))
+                    .cornerRadius(8)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color.green.opacity(0.1))
-                .cornerRadius(8)
+                .buttonStyle(.plain)
             } else if gewuenschterBeginnNorm >= regelalter {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
@@ -448,7 +453,7 @@ struct BerechnungsgrundlagenSection: View {
                 )
                 
                 InfoRow(
-                    label: "Rentenwert",
+                    label: "Rentenwert ab 01.07.2026",
                     value: "\(viewModel.formatCurrency(settings.rentenwert)) pro Punkt",
                     icon: "eurosign.circle"
                 )
@@ -459,7 +464,7 @@ struct BerechnungsgrundlagenSection: View {
                     icon: "chart.line.uptrend.xyaxis"
                 )
                 
-                InfoText("Diese Werte gelten für \(settings.gueltigkeitsjahrText) und können sich ändern.")
+                InfoText("Diese Werte gelten für \(settings.gueltigkeitsjahrText). Der Rentenwert ist ab 01.07.2026 hinterlegt und sollte nach endgültiger Verabschiedung geprüft werden.")
             }
             .padding()
         }

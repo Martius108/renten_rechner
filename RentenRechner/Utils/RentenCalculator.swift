@@ -240,10 +240,10 @@ class RentenCalculator {
         // Vergleich: Frühester abschlagsfreier Beginn (45 Jahre)
         if fruehesterAbschlagsfreierBeginn < regelaltersgrenze {
             szenarioHinzufuegen(
-                name: "Abschlagsfrei früher",
-                beschreibung: "Frühester Beginn ohne Abschläge bei erfüllten 45 Versicherungsjahren",
+                name: "Früher möglich (45 Jahre)",
+                beschreibung: "Rechnerisch ohne Abschlag möglich - nur bei erfüllter 45-jähriger Wartezeit",
                 rentenbeginn: fruehesterAbschlagsfreierBeginn,
-                empfehlung: .positiv
+                empfehlung: .neutral
             )
         }
         

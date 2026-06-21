@@ -83,7 +83,11 @@ struct SettingsView: View {
             }
             
             .onAppear {
-                if settings.isEmpty {
+                if let setting = settings.first {
+                    if setting.aktualisiereGesetzlicheStandardwerteAuf2026FallsNoetig() {
+                        try? context.save()
+                    }
+                } else {
                     let neues = AppSettings()
                     context.insert(neues)
                     try? context.save()
@@ -141,7 +145,7 @@ struct EditableSettingsContent: View {
             )
 
             numberField(
-                title: "Rentenwert pro Punkt",
+                title: "Rentenwert ab 01.07.2026",
                 suffix: "€",
                 binding: $setting.rentenwert,
                 field: .rentenwert
@@ -159,7 +163,7 @@ struct EditableSettingsContent: View {
     private var steuernUndAbgabenSection: some View {
         Section("Steuern & Sozialabgaben") {
             numberField(
-                title: "Steuerfreibetrag",
+                title: "Grundfreibetrag",
                 suffix: "€",
                 binding: $setting.steuerfreibetrag,
                 field: .steuerfreibetrag

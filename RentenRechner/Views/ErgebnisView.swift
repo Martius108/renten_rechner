@@ -147,7 +147,7 @@ struct ErgebnisView: View {
                 // Berechnungsdetails
                 VStack(alignment: .leading, spacing: 8) {
                     DetailRow(
-                        label: "Rentenwert",
+                        label: "Rentenwert ab 01.07.2026",
                         value: "\(viewModel.formatCurrency(ergebnis.verwendeterRentenwert)) pro Punkt"
                     )
                     
@@ -176,7 +176,7 @@ struct ErgebnisView: View {
                     )
                     
                     DetailRow(
-                        label: "× Rentenwert",
+                        label: "× Rentenwert ab 01.07.2026",
                         value: viewModel.formatCurrency(ergebnis.verwendeterRentenwert)
                     )
                     
@@ -312,19 +312,28 @@ struct ErgebnisView: View {
                     
                     TimelineRow(
                         icon: "star.circle",
-                        title: "Frühester abschlagsfreier Beginn",
+                        title: "Frühester möglicher Beginn ohne Abschlag",
                         date: ergebnis.fruehesterAbschlagsfreierBeginn,
-                        description: "Bei erfüllten 45 Versicherungsjahren",
+                        description: "Nur bei erfüllter 45-jähriger Wartezeit",
                         isHighlighted: false
                     )
                     
+                    let gewaehlterBeginnVorRegelalter = ergebnis.tatsaechlicherRentenbeginn < ergebnis.regelaltersgrenze
+                    let abschlagsfreiVorRegelalter = ergebnis.istAbschlagsfrei && gewaehlterBeginnVorRegelalter
+                    let statusText = abschlagsfreiVorRegelalter
+                        ? "Rechnerisch ohne Abschlag, 45-jährige Wartezeit nicht geprüft"
+                        : (ergebnis.istAbschlagsfrei ? "Abschlagsfrei" : "Mit Abschlag")
+                    let statusColor: Color = abschlagsfreiVorRegelalter
+                        ? .secondary
+                        : (ergebnis.istAbschlagsfrei ? .green : .orange)
+                    
                     TimelineRow(
-                        icon: ergebnis.istAbschlagsfrei ? "checkmark.circle.fill" : "calendar.badge.exclamationmark",
+                        icon: abschlagsfreiVorRegelalter ? "questionmark.circle" : (ergebnis.istAbschlagsfrei ? "checkmark.circle.fill" : "calendar.badge.exclamationmark"),
                         title: "Ihr gewählter Rentenbeginn",
                         date: ergebnis.tatsaechlicherRentenbeginn,
-                        description: ergebnis.istAbschlagsfrei ? "Abschlagsfrei" : "Mit Abschlag",
+                        description: statusText,
                         isHighlighted: true,
-                        textColor: ergebnis.istAbschlagsfrei ? .green : .orange
+                        textColor: statusColor
                     )
                 }
             }

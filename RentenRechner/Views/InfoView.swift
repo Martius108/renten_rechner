@@ -18,6 +18,8 @@ struct InfoView: View {
                     
                     berechnungsgrundlagenSection
                     
+                    wartezeit45JahreSection
+                    
                     grundrenteSection       // 🆕 NEUER ABSCHNITT
                     
                     rechtlicheHinweiseSection
@@ -108,7 +110,7 @@ struct InfoView: View {
                     )
                     
                     InfoDetailRow(
-                        title: "Aktueller Rentenwert",
+                        title: "Rentenwert ab 01.07.2026",
                         value: "\(viewModel.formatCurrency(settings.rentenwert)) pro Punkt",
                         description: "Wert eines Rentenpunktes"
                     )
@@ -128,11 +130,21 @@ struct InfoView: View {
                 
                 Divider()
                 
-                Text("Diese Werte basieren auf der aktuellen Gesetzgebung und können sich in Zukunft ändern.")
+                Text("Diese Werte gelten für \(settings.gueltigkeitsjahrText). Der Rentenwert ist ab 01.07.2026 hinterlegt und sollte nach endgültiger Verabschiedung geprüft werden.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             .padding()
+        }
+        .groupBoxStyle(CardGroupBoxStyle())
+    }
+    
+    // MARK: - 45 Jahre Wartezeit Section
+    
+    private var wartezeit45JahreSection: some View {
+        GroupBox {
+            Wartezeit45JahreInfoContent()
+                .padding()
         }
         .groupBoxStyle(CardGroupBoxStyle())
     }
@@ -143,8 +155,8 @@ struct InfoView: View {
         GroupBox {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Image(systemName: "shield.lefthalf.fill")
-                        .foregroundColor(.purple)
+                    Image(systemName: "questionmark.circle")
+                        .foregroundColor(.orange)
                     Text("Grundrente & Grundsicherung")
                         .font(.headline)
                         .fontWeight(.semibold)
@@ -155,12 +167,12 @@ struct InfoView: View {
                     In Deutschland gibt es keine einheitliche gesetzliche „Mindestrente“. Stattdessen greifen zwei Unterstützungsmechanismen:
                     
                     • Grundrente (seit 2021):
-                      Versicherte mit mindestens 33 Jahren Grundrentenzeiten (z. B. Arbeit, Kindererziehung) erhalten einen Zuschlag, wenn ihre Rente sehr niedrig ist. Dadurch werden Rentenpunkte aufgestockt. Es gibt keinen Unterschied zwischen Männern und Frauen.
+                      Versicherte können ab 33 Jahren Grundrentenzeiten einen Zuschlag erhalten; der volle Zuschlag setzt in der Regel mindestens 35 Jahre Grundrentenzeiten voraus. Zusätzlich werden Einkommen und weitere Voraussetzungen geprüft.
                     
                     • Grundsicherung im Alter:
-                      Liegt das Gesamteinkommen unter dem Existenzminimum (abhängig von Wohnort und Miete), kann Grundsicherung beantragt werden. Diese wird vom Sozialamt gezahlt.
+                      Wenn Einkommen und verwertbares Vermögen für den Lebensunterhalt nicht ausreichen, kann Grundsicherung im Alter beantragt werden. Zuständig ist in der Regel das Sozialamt.
                     
-                    Tipp: Falls Ihre berechnete Rente unter diesem Niveau liegt, besteht evtl. Anspruch auf Grundrente oder Grundsicherung.
+                    Tipp: Eine niedrige berechnete Rente kann ein Hinweis sein, mögliche Ansprüche prüfen zu lassen. Diese App kann solche Ansprüche nicht berechnen.
                     """)
                     .font(.body)
                     .foregroundColor(.primary)
@@ -194,13 +206,13 @@ struct InfoView: View {
                     DisclaimerPoint(
                         icon: "calendar.badge.exclamationmark",
                         title: "Aktuelle Werte",
-                        text: "Die Berechnung basiert auf den hinterlegten Werten (\(viewModel.settings.gueltigkeitsjahrText)). Zukünftige Änderungen der Rentenformel oder -werte sind nicht berücksichtigt."
+                        text: "Die Berechnung basiert auf den hinterlegten Werten (\(viewModel.settings.gueltigkeitsjahrText)). Der Rentenwert ist ab 01.07.2026 hinterlegt. Zukünftige Änderungen der Rentenformel oder -werte sind nicht berücksichtigt."
                     )
                     
                     DisclaimerPoint(
                         icon: "person.2",
                         title: "Individuelle Faktoren",
-                        text: "Persönliche Faktoren wie Kindererziehungszeiten, Arbeitslosigkeit oder Krankheit werden vereinfacht behandelt."
+                        text: "Persönliche Faktoren wie Kindererziehungszeiten, Pflegezeiten, Arbeitslosigkeit, Krankheit, freiwillige Beiträge oder weitere Versicherungszeiten werden nicht vollständig geprüft."
                     )
                     
                     DisclaimerPoint(
@@ -212,7 +224,7 @@ struct InfoView: View {
                 
                 Divider()
                 
-                Text("Haftungsausschluss: Der Entwickler übernimmt keine Haftung für die Richtigkeit der Berechnungen oder daraus resultierende Entscheidungen.")
+                Text("Haftungshinweis: Die App stellt keine Rechts-, Renten- oder Steuerberatung dar. Eine Haftung für Entscheidungen auf Basis der Berechnung ist, soweit gesetzlich zulässig, ausgeschlossen.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -228,7 +240,7 @@ struct InfoView: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     Image(systemName: "questionmark.circle")
-                        .foregroundColor(.green)
+                        .foregroundColor(.orange)
                     Text("Hilfe & Kontakt")
                         .font(.headline)
                         .fontWeight(.semibold)
@@ -296,6 +308,30 @@ struct InfoView: View {
 }
 
 // MARK: - Helper Views
+
+struct Wartezeit45JahreInfoContent: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "questionmark.circle")
+                    .foregroundColor(.orange)
+                Text("45-jährige Wartezeit")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+            }
+            
+            Text("""
+            Der frühere Rentenbeginn ohne Abschlag ist nur für besonders langjährig Versicherte möglich. Dafür muss die 45-jährige Wartezeit erfüllt sein.
+            
+            Diese App kann diese Wartezeit aktuell nicht verbindlich prüfen, weil dafür individuelle Versicherungszeiten nötig sind. Dazu können zum Beispiel Pflichtbeiträge, Kindererziehungszeiten, Pflegezeiten, bestimmte Zeiten des Bezugs von Entgeltersatzleistungen und weitere rentenrechtliche Zeiten zählen. Nicht jede Zeit zählt automatisch.
+            
+            Wenn der gewählte Rentenbeginn vor der Regelaltersgrenze liegt, zeigt die App deshalb nur: rechnerisch ohne Abschlag möglich. Ob die 45 Jahre tatsächlich erfüllt sind, muss anhand Ihrer Rentenauskunft oder durch die Deutsche Rentenversicherung geprüft werden.
+            """)
+            .font(.body)
+            .foregroundColor(.primary)
+        }
+    }
+}
 
 struct InfoDetailRow: View {
     let title: String

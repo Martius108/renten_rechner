@@ -3,7 +3,45 @@ import XCTest
 
 final class RentenCalculatorTests: XCTestCase {
     func testGueltigkeitsjahrIstManuellGepflegterDatenstand() {
-        XCTAssertEqual(AppSettings().gueltigkeitsjahr, 2025)
+        XCTAssertEqual(AppSettings().gueltigkeitsjahr, 2026)
+    }
+
+    func testDefaultWerteEntsprechenDatenstand2026() {
+        let settings = AppSettings()
+
+        XCTAssertEqual(settings.durchschnittsentgelt, 51_944, accuracy: 0.01)
+        XCTAssertEqual(settings.rentenwert, 42.52, accuracy: 0.01)
+        XCTAssertEqual(settings.beitragsbemessungsgrenze, 101_400, accuracy: 0.01)
+        XCTAssertEqual(settings.steuerfreibetrag, 12_348, accuracy: 0.01)
+        XCTAssertEqual(settings.steuerpflichtQuote, 0.84, accuracy: 0.0001)
+        XCTAssertEqual(settings.krankenkassenBeitragssatz, 0.146, accuracy: 0.0001)
+        XCTAssertEqual(settings.krankenkassenZusatzbeitrag, 0.029, accuracy: 0.0001)
+        XCTAssertEqual(settings.pflegeversicherungsBeitrag, 0.036, accuracy: 0.0001)
+    }
+
+    func testGespeicherteAlteStandardwerteWerdenAuf2026Aktualisiert() {
+        let settings = AppSettings()
+        settings.gueltigkeitsjahr = 2026
+        settings.durchschnittsentgelt = 51_944
+        settings.rentenwert = 40.79
+        settings.beitragsbemessungsgrenze = 101_400
+        settings.steuerfreibetrag = 12_196
+        settings.steuerpflichtQuote = 0.835
+        settings.krankenkassenZusatzbeitrag = 0.025
+
+        XCTAssertTrue(settings.aktualisiereGesetzlicheStandardwerteAuf2026FallsNoetig())
+        XCTAssertEqual(settings.rentenwert, 42.52, accuracy: 0.01)
+        XCTAssertEqual(settings.steuerfreibetrag, 12_348, accuracy: 0.01)
+        XCTAssertEqual(settings.steuerpflichtQuote, 0.84, accuracy: 0.0001)
+        XCTAssertEqual(settings.krankenkassenZusatzbeitrag, 0.029, accuracy: 0.0001)
+    }
+
+    func testAktuelleOderManuellAbweichendeWerteWerdenNichtStaendigUeberschrieben() {
+        let settings = AppSettings()
+        settings.rentenwert = 42.60
+
+        XCTAssertFalse(settings.aktualisiereGesetzlicheStandardwerteAuf2026FallsNoetig())
+        XCTAssertEqual(settings.rentenwert, 42.60, accuracy: 0.01)
     }
 
     @MainActor
@@ -11,9 +49,9 @@ final class RentenCalculatorTests: XCTestCase {
         let settings = AppSettings()
         let viewModel = RentenrechnerViewModel()
 
-        XCTAssertEqual(settings.gueltigkeitsjahrText, "2025")
-        XCTAssertFalse(viewModel.formatCurrency(96_600).contains("96.600"))
-        XCTAssertTrue(viewModel.formatCurrency(96_600).contains("96600"))
+        XCTAssertEqual(settings.gueltigkeitsjahrText, "2026")
+        XCTAssertFalse(viewModel.formatCurrency(101_400).contains("101.400"))
+        XCTAssertTrue(viewModel.formatCurrency(101_400).contains("101400"))
     }
 
     @MainActor

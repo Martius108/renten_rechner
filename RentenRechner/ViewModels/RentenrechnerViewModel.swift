@@ -81,6 +81,8 @@ class RentenrechnerViewModel: ObservableObject {
                 context.insert(newSettings)
                 try? context.save()
                 self.appSettings = newSettings
+            } else if self.appSettings?.aktualisiereGesetzlicheStandardwerteAuf2026FallsNoetig() == true {
+                try? context.save()
             }
             
             // Aktualisiere calculator mit geladenen appSettings
@@ -189,7 +191,7 @@ class RentenrechnerViewModel: ObservableObject {
         return """
         Berechnungsgrundlagen \(settings.gueltigkeitsjahrText):
         • Durchschnittsentgelt: \(String(format: "%.0f€", settings.durchschnittsentgelt))
-        • Rentenwert: \(String(format: "%.2f€", settings.rentenwert))
+        • Rentenwert ab 01.07.2026: \(String(format: "%.2f€", settings.rentenwert))
         • Beitragsbemessungsgrenze: \(String(format: "%.0f€", settings.beitragsbemessungsgrenze))
         """
     }
@@ -315,8 +317,12 @@ class RentenrechnerViewModel: ObservableObject {
             let descriptor = FetchDescriptor<AppSettings>()
             let savedSettings = try context.fetch(descriptor)
             if let settings = savedSettings.first {
+                let wurdeAktualisiert = settings.aktualisiereGesetzlicheStandardwerteAuf2026FallsNoetig()
                 self.appSettings = settings
                 self.fruehererRentenbeginnGewuenscht = settings.nutztAbweichendenRentenbeginn
+                if wurdeAktualisiert {
+                    try context.save()
+                }
             } else {
                 let newSettings = AppSettings()
                 context.insert(newSettings)
@@ -426,7 +432,9 @@ extension RentenrechnerViewModel {
         guard let ergebnis = ergebnis else {
             return "Führen Sie zuerst eine Berechnung durch"
         }
-        if ergebnis.istAbschlagsfrei {
+        if ergebnis.istAbschlagsfrei && ergebnis.tatsaechlicherRentenbeginn < ergebnis.regelaltersgrenze {
+            return "⚠️ Rechnerisch ohne Abschlag möglich - 45-jährige Wartezeit nicht geprüft"
+        } else if ergebnis.istAbschlagsfrei {
             return "✅ Ihr gewählter Rentenbeginn ist optimal - keine Abschläge!"
         } else {
             let abschlagProzent = ergebnis.abschlagProzent * 100
