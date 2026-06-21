@@ -29,8 +29,3 @@ Die Datenschutzerklärung ist hier verfügbar:
 - [Datenschutzerklärung](docs/privacy.md)
 - [Datenschutzerklärung HTML](docs/privacy.html)
 
-## Repository
-
-GitHub-Repository:
-
-- [Martius108/renten_rechner](https://github.com/Martius108/renten_rechner)
