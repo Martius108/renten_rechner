@@ -44,6 +44,4 @@ Für verbindliche Rentenauskünfte wenden Sie sich bitte an die Deutsche Rentenv
 
 Bei Datenschutzfragen kontaktieren Sie bitte:
 
-martin@example.com
-
-Bitte ersetzen Sie diese E-Mail-Adresse vor der Einreichung im App Store durch die korrekte Support- oder Datenschutzadresse.
+martin.lanius@icloud.com
