@@ -16,9 +16,9 @@ Die App hilft dabei, vorhandene Rentenpunkte, monatliches Einkommen und einen ge
 
 ## Berechnungsgrundlagen
 
-Die App enthält manuell gepflegte Werte für Rente, Steuern und Sozialabgaben für den Datenstand 2026.
+Die App enthält manuell gepflegte Werte für Rente, Steuern und Sozialabgaben.
 
-Der Rentenwert ist als Wert ab dem 01.07.2026 hinterlegt. Dieser Wert sollte nach endgültiger offizieller Veröffentlichung noch einmal geprüft werden.
+Die aktuellen Rentenwerte werden in der Regel zum 01.07. eines Jahres nach Verabschiedung durch die Bundesregierung hinterlegt.
 
 Wichtig: Die App dient nur der groben Orientierung. Sie ersetzt keine Rechts-, Renten-, Steuer- oder Finanzberatung.
 
