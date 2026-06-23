@@ -252,6 +252,13 @@ struct RentenoptionenSection: View {
                 } else {
                     InfoText("Der Rentenbeginn entspricht der Regelaltersgrenze.")
                 }
+
+                Text("Berücksichtigung von Zusatzrenten")
+                    .font(.body)
+                    .foregroundColor(.primary)
+                    .padding(.top, 6)
+
+                ZusatzrentenHinweisLink(viewModel: viewModel)
             }
             .padding()
         }
@@ -277,7 +284,7 @@ private struct ZusatzinformationenAbschlagsfrei: View {
                 let prozent = Double(monateVorRegelalter) * 0.3
                 WarningRow(text: "⚠️ \(monateVorRegelalter) Monate vor Regelalter = bis zu \(String(format: "%.1f", prozent))% Abschlag")
             } else if gewuenschterBeginnNorm >= fruehesterAbschlagsfrei && gewuenschterBeginnNorm < regelalter {
-                NavigationLink(destination: InfoView().environmentObject(viewModel)) {
+                NavigationLink(destination: InfoView(initialSection: .wartezeit45Jahre).environmentObject(viewModel)) {
                     HStack(spacing: 8) {
                         Image(systemName: "questionmark.circle")
                         Text("Rechnerisch ohne Abschlag möglich - 45-jährige Wartezeit wird nicht geprüft")
@@ -307,6 +314,29 @@ private struct ZusatzinformationenAbschlagsfrei: View {
                 .cornerRadius(8)
             }
         }
+    }
+}
+
+private struct ZusatzrentenHinweisLink: View {
+    @ObservedObject var viewModel: RentenrechnerViewModel
+
+    var body: some View {
+        NavigationLink(destination: InfoView(initialSection: .zusatzrenten).environmentObject(viewModel)) {
+            HStack(spacing: 8) {
+                Image(systemName: "questionmark.circle")
+                Text("Bitte lesen Sie die Hinweise zur Berücksichtigung von Zusatzrenten")
+                    .font(.caption)
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+            }
+            .foregroundColor(.orange)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color.orange.opacity(0.12))
+            .cornerRadius(8)
+        }
+        .buttonStyle(.plain)
     }
 }
 

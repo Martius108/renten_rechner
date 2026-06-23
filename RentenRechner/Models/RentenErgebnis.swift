@@ -108,8 +108,8 @@ struct RentenErgebnis: Codable, Identifiable {
         
         // 1. Sozialabgaben mit dynamischem DRV-Zuschuss:
         //    - KV: hälftiger Anteil des allgemeinen KV-Satzes (DRV zahlt die andere Hälfte)
-        //    - Zusatzbeitrag: voll (kein Zuschuss)
-        //    - Pflege: voll
+        //    - Zusatzbeitrag: hälftiger Anteil (DRV beteiligt sich zur Hälfte)
+        //    - Pflegeversicherung: voller Anteil
         let kvHalb = s.krankenkassenBeitragssatz / 2.0
         let zusatzHalb = s.krankenkassenZusatzbeitrag / 2.0
         let sozialabgabenSatz = kvHalb + zusatzHalb + s.pflegeversicherungsBeitrag

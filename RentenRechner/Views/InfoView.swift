@@ -7,30 +7,54 @@
 
 import SwiftUI
 
+enum InfoSectionID: Hashable {
+    case wartezeit45Jahre
+    case zusatzrenten
+}
+
 struct InfoView: View {
     @EnvironmentObject var viewModel: RentenrechnerViewModel
+    let initialSection: InfoSectionID?
+
+    init(initialSection: InfoSectionID? = nil) {
+        self.initialSection = initialSection
+    }
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                LazyVStack(spacing: 24) {
-                    appInfoSection
-                    
-                    berechnungsgrundlagenSection
-                    
-                    wartezeit45JahreSection
-                    
-                    grundrenteSection       // 🆕 NEUER ABSCHNITT
-                    
-                    rechtlicheHinweiseSection
-                    
-                    kontaktSection
-                    
-                    impressumSection
-                    
-                    Spacer(minLength: 100)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 24) {
+                        appInfoSection
+                        
+                        berechnungsgrundlagenSection
+                        
+                        wartezeit45JahreSection
+                            .id(InfoSectionID.wartezeit45Jahre)
+                        
+                        zusatzrentenSection
+                            .id(InfoSectionID.zusatzrenten)
+                        
+                        grundrenteSection       // 🆕 NEUER ABSCHNITT
+                        
+                        rechtlicheHinweiseSection
+                        
+                        kontaktSection
+                        
+                        impressumSection
+                        
+                        Spacer(minLength: 100)
+                    }
+                    .padding()
                 }
-                .padding()
+                .onAppear {
+                    guard let initialSection else { return }
+                    DispatchQueue.main.async {
+                        withAnimation {
+                            proxy.scrollTo(initialSection, anchor: .top)
+                        }
+                    }
+                }
             }
             .navigationTitle("Informationen")
             .navigationBarTitleDisplayMode(.large)
@@ -145,6 +169,38 @@ struct InfoView: View {
         GroupBox {
             Wartezeit45JahreInfoContent()
                 .padding()
+        }
+        .groupBoxStyle(CardGroupBoxStyle())
+    }
+    
+    // MARK: - Zusatzrenten Section
+
+    private var zusatzrentenSection: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Image(systemName: "questionmark.circle")
+                        .foregroundColor(.orange)
+                    Text("Zusatzrenten")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("""
+                    Der RentenRechner Deutschland berechnet nur eine grobe Schätzung der gesetzlichen Altersrente aus der Deutschen Rentenversicherung.
+
+                    Nicht enthalten sind zusätzliche Altersvorsorgeansprüche wie Betriebsrenten, private Rentenversicherungen, Riester- oder Rürup-Renten, Versorgungswerke, Pensionen, Hinterbliebenenrenten, Erwerbsminderungsrenten, Kapitalerträge oder Hinzuverdienste.
+
+                    Solche Zusatzrenten können Ihre tatsächlichen Alterseinkünfte deutlich erhöhen oder verändern. Sie werden aber häufig nach eigenen Regeln besteuert, können eigene Auszahlungsmodelle haben und teilweise Auswirkungen auf Kranken- und Pflegeversicherungsbeiträge haben.
+
+                    Wenn Sie Zusatzrenten haben, betrachten Sie das Ergebnis dieser App deshalb nur als gesetzlichen Rentenanteil. Für eine realistische Gesamtplanung sollten Sie die Bescheide und Vertragsunterlagen der jeweiligen Anbieter zusätzlich prüfen.
+                    """)
+                    .font(.body)
+                    .foregroundColor(.primary)
+                }
+            }
+            .padding()
         }
         .groupBoxStyle(CardGroupBoxStyle())
     }

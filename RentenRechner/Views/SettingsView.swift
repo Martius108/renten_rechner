@@ -183,13 +183,13 @@ struct EditableSettingsContent: View {
 
             numberField(title: "Krankenkassen-Beitragssatz", suffix: "",
                         binding: $setting.krankenkassenBeitragssatz, field: .kvSatz)
-            Text("Aktuell: \(String(format: "%.1f", setting.krankenkassenBeitragssatz * 100))%")
+            Text("Aktuell: \(String(format: "%.1f", setting.krankenkassenBeitragssatz * 100))% (wird zu 50% berücksichtigt)")
                 .font(.caption)
                 .foregroundColor(.blue)
 
             numberField(title: "KV-Zusatzbeitrag", suffix: "",
                         binding: $setting.krankenkassenZusatzbeitrag, field: .kvZusatz)
-            Text("Aktuell: \(String(format: "%.1f", setting.krankenkassenZusatzbeitrag * 100))%")
+            Text("Aktuell: \(String(format: "%.1f", setting.krankenkassenZusatzbeitrag * 100))% (wird zu 50% berücksichtigt)")
                 .font(.caption)
                 .foregroundColor(.blue)
 
