@@ -22,6 +22,12 @@ Die aktuellen Rentenwerte werden in der Regel zum 01.07. eines Jahres nach Verab
 
 Wichtig: Die App dient nur der groben Orientierung. Sie ersetzt keine Rechts-, Renten-, Steuer- oder Finanzberatung.
 
+## Hinweise
+
+RentenRechner Deutschland speichert rentenbezogene Eingaben und App-Einstellungen mit SwiftData lokal auf dem Gerät. Die App betreibt keinen eigenen Server und sendet die eingegebenen Rentendaten nicht an einen vom Entwickler betriebenen Dienst.
+
+Die Berechnungen basieren auf hinterlegten gesetzlichen Werten, vereinfachten Annahmen und den Eingaben des Nutzers. Die App kann individuelle Versicherungsverläufe, verbindliche Rentenauskünfte, Steuerbescheide oder Sozialabgaben im Einzelfall nicht prüfen.
+
 ## Datenschutz
 
 Die Datenschutzerklärung ist hier verfügbar:
