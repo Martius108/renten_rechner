@@ -2,7 +2,6 @@
 //  ErgebnisView.swift
 //  RentenRechner
 //
-//  Anzeige der Rentenberechnungsergebnisse
 //
 
 import SwiftUI
@@ -43,12 +42,11 @@ struct ErgebnisView: View {
         }
     }
     
-    // MARK: - Header Card
+
     
     private func headerCard(_ ergebnis: RentenErgebnis) -> some View {
         GroupBox {
             VStack(spacing: 20) {
-                // Hauptergebnis
                 VStack(spacing: 8) {
                     Text("Ihre voraussichtliche Rente")
                         .font(.headline)
@@ -65,7 +63,6 @@ struct ErgebnisView: View {
                 
                 Divider()
                 
-                // Zusätzliche Infos
                 HStack(spacing: 20) {
                     VStack {
                         Text(viewModel.formatCurrency(ergebnis.geschaetzteNettoRente))
@@ -93,7 +90,7 @@ struct ErgebnisView: View {
         .groupBoxStyle(HighlightGroupBoxStyle())
     }
     
-    // MARK: - Rentenpunkte Card
+
     
     private func rentenpunkteCard(_ ergebnis: RentenErgebnis) -> some View {
         GroupBox {
@@ -103,7 +100,6 @@ struct ErgebnisView: View {
                     Spacer()
                 }
                 
-                // Visualisierung der Rentenpunkte
                 HStack(spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Bereits erworben")
@@ -144,7 +140,6 @@ struct ErgebnisView: View {
                 
                 Divider()
                 
-                // Berechnungsdetails
                 VStack(alignment: .leading, spacing: 8) {
                     DetailRow(
                         label: "Rentenwert ab 01.07.2026",
@@ -162,7 +157,7 @@ struct ErgebnisView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - Berechnungsdetails Card
+
     
     private func berechnungsdetailsCard(_ ergebnis: RentenErgebnis) -> some View {
         GroupBox {
@@ -236,7 +231,7 @@ struct ErgebnisView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - Abschlag Card
+
     
     private func abschlagCard(_ ergebnis: RentenErgebnis) -> some View {
         GroupBox {
@@ -294,7 +289,7 @@ struct ErgebnisView: View {
         .groupBoxStyle(WarningGroupBoxStyle())
     }
     
-    // MARK: - Zeitplan Card
+
     
     private func zeitplanCard(_ ergebnis: RentenErgebnis) -> some View {
         GroupBox {
@@ -342,7 +337,7 @@ struct ErgebnisView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - Weitere Informationen Card
+
     
     private var weitereInformationenCard: some View {
         GroupBox {
@@ -379,7 +374,7 @@ struct ErgebnisView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - Disclaimer Card
+
     
     private var disclaimerCard: some View {
         GroupBox {

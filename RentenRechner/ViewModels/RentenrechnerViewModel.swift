@@ -2,7 +2,6 @@
 //  RentenrechnerViewModel.swift
 //  RentenRechner
 //
-//  ViewModel für die Renten-App mit State Management und Berechnungslogik (SwiftData)
 //
 
 import Foundation
@@ -13,11 +12,11 @@ import SwiftData
 @MainActor
 class RentenrechnerViewModel: ObservableObject {
     
-    // MARK: - SwiftData Context
+
     
     private var modelContext: ModelContext?
     
-    // MARK: - Published Properties
+
     
     @Published var person: Person
     @Published var ergebnis: RentenErgebnis?
@@ -27,28 +26,26 @@ class RentenrechnerViewModel: ObservableObject {
     @Published var showingError = false
     @Published var appSettings: AppSettings? = nil
     
-    // UI State
     @Published var fruehererRentenbeginnGewuenscht = false
     @Published var showingSzenarien = false
     @Published var selectedTab = 0
     
-    // Validierungsstate
     @Published var geburtsdatumFehler: String?
     @Published var einkommenFehler: String?
     @Published var rentenpunkteFehler: String?
     @Published var rentenbeginnFehler: String?
     
-    // MARK: - Private Properties
+
     
     private var calculator: RentenCalculator
     private var cancellables = Set<AnyCancellable>()
     
-    // MARK: - Public read-only accessor for Views
+
     var settings: AppSettings {
         appSettings ?? AppSettings()
     }
     
-    // MARK: - Hilfs-Property für aktuellen wirksamen Rentenbeginn
+
     
     var aktuellerRentenbeginn: Date {
         guard let settings = appSettings,
@@ -59,18 +56,15 @@ class RentenrechnerViewModel: ObservableObject {
         return rentenbeginn
     }
     
-    // MARK: - Initialization
+
     
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext
         
-        // Initialisiere person mit einem Default-Wert, damit self vollständig initialisiert ist
         self.person = Person()
         
-        // Initialisiere calculator mit nil, wird später aktualisiert
         self.calculator = RentenCalculator(appSettings: nil)
         
-        // Jetzt kannst du self.appSettings sicher verwenden
         if let context = modelContext {
             let settingsDescriptor = FetchDescriptor<AppSettings>()
             let savedSettings = try? context.fetch(settingsDescriptor)
@@ -85,10 +79,8 @@ class RentenrechnerViewModel: ObservableObject {
                 try? context.save()
             }
             
-            // Aktualisiere calculator mit geladenen appSettings
             self.calculator = RentenCalculator(appSettings: self.appSettings)
             
-            // Person laden/ersetzen, falls vorhanden
             let descriptor = FetchDescriptor<Person>()
             let savedPersons = try? context.fetch(descriptor)
             if let savedPerson = savedPersons?.first {
@@ -100,7 +92,7 @@ class RentenrechnerViewModel: ObservableObject {
         setupValidation()
     }
     
-    // MARK: - SwiftData Setup
+
     
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
@@ -108,10 +100,9 @@ class RentenrechnerViewModel: ObservableObject {
         loadPersonData()
     }
     
-    // MARK: - Validation Setup
+
     
     private func setupValidation() {
-        // Geburtsdatum
         $person
             .map(\.geburtsdatum)
             .removeDuplicates()
@@ -124,7 +115,6 @@ class RentenrechnerViewModel: ObservableObject {
             .assign(to: \.geburtsdatumFehler, on: self)
             .store(in: &cancellables)
         
-        // Einkommen
         $person
             .map(\.monatlichesEinkommen)
             .removeDuplicates()
@@ -141,7 +131,6 @@ class RentenrechnerViewModel: ObservableObject {
             .assign(to: \.einkommenFehler, on: self)
             .store(in: &cancellables)
         
-        // Rentenpunkte
         $person
             .map(\.aktuelleRentenpunkte)
             .removeDuplicates()
@@ -156,7 +145,6 @@ class RentenrechnerViewModel: ObservableObject {
             .assign(to: \.rentenpunkteFehler, on: self)
             .store(in: &cancellables)
         
-        // Rentenbeginn Warnungen
         $appSettings
             .map { [weak self] settings -> String? in
                 guard let self = self,
@@ -175,7 +163,7 @@ class RentenrechnerViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    // MARK: - Computed Properties
+
     
     var istEingabeGueltig: Bool {
         geburtsdatumFehler == nil &&
@@ -196,7 +184,7 @@ class RentenrechnerViewModel: ObservableObject {
         """
     }
     
-    // MARK: - Actions
+
     
     func berechneRente() {
         guard istEingabeGueltig else {
@@ -205,7 +193,6 @@ class RentenrechnerViewModel: ObservableObject {
             return
         }
         
-        // Normalisieren
         person.geburtsdatum = DateHelper.mitternachtStabil(fuer: person.geburtsdatum)
         savePersonData()
         
@@ -279,7 +266,7 @@ class RentenrechnerViewModel: ObservableObject {
         }
     }
     
-    // MARK: - SwiftData Loading/Saving
+
     
     func savePersonData() {
         guard let context = modelContext else { return }
@@ -336,7 +323,7 @@ class RentenrechnerViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Helper Functions
+
     
     func getRentenpunkteProJahr() -> Double {
         calculator.berechneRentenpunkteProJahr(jahreseinkommen: person.jahresbruttoeinkommen)
@@ -359,7 +346,7 @@ class RentenrechnerViewModel: ObservableObject {
         return DateHelper.naechsterMonatserster(ab: fruehester)
     }
     
-    // MARK: - Sharing & Export
+
     
     func getShareText() -> String {
         guard let ergebnis = ergebnis else {
@@ -373,7 +360,7 @@ class RentenrechnerViewModel: ObservableObject {
         return ergebnis.alsExportDictionary()
     }
     
-    // MARK: - UI Helpers
+
     
     func formatCurrency(_ amount: Double) -> String {
         let formatter = NumberFormatter()
@@ -397,7 +384,7 @@ class RentenrechnerViewModel: ObservableObject {
         String(format: "%.\(digits)f", number)
     }
     
-    // MARK: - Error Handling
+
     
     func clearError() {
         fehlerMeldung = nil

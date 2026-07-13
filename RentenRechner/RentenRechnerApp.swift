@@ -2,7 +2,6 @@
 //  App.swift
 //  RentenRechner
 //
-//  Haupteinstiegspunkt der iOS RentenRechner App
 //
 
 import SwiftUI
@@ -14,15 +13,13 @@ struct RentenRechnerApp: App {
         WindowGroup {
             ContentView()
         }
-        // SwiftData Container
         .modelContainer(for: [AppSettings.self, Person.self])
         .environment(\.locale, Locale(identifier: "de_DE"))
     }
     
-    // MARK: - App Configuration
+
     
     private func configureAppearance() {
-        // Navigation Bar Appearance
         let navBarAppearance = UINavigationBarAppearance()
         navBarAppearance.configureWithOpaqueBackground()
         navBarAppearance.backgroundColor = UIColor.systemBackground
@@ -39,7 +36,6 @@ struct RentenRechnerApp: App {
         UINavigationBar.appearance().compactAppearance = navBarAppearance
         UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
 
-        // Tab Bar Appearance
         let tabBarAppearance = UITabBarAppearance()
         tabBarAppearance.configureWithOpaqueBackground()
         tabBarAppearance.backgroundColor = UIColor.systemBackground
@@ -47,7 +43,6 @@ struct RentenRechnerApp: App {
         UITabBar.appearance().standardAppearance = tabBarAppearance
         UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
 
-        // Tint Color für die gesamte App
         UIView.appearance().tintColor = UIColor.systemBlue
     }
 }

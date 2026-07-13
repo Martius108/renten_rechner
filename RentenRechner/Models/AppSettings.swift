@@ -2,7 +2,6 @@
 //  AppSettings.swift
 //  RentenRechner
 //
-//  Persistente Rentendaten in Abhängigkeit vom Gesetzgeber
 //
 
 import Foundation
@@ -41,21 +40,18 @@ class AppSettings {
         String(gueltigkeitsjahr)
     }
 
-    // Neue Properties für Regelaltersgrenze und frühesten abschlagsfreien Beginn
     var regelaltersgrenze: Date = Date()
     var fruehesterAbschlagsfreierBeginn: Date = Date()
     var abweichenderRentenbeginn: Date? = nil
     var nutztAbweichendenRentenbeginn: Bool = false
 
     init() {
-        // Beispiel-Geburtsdatum (60 Jahre vor heute)
         let beispielGeburtsdatum = Calendar.current.date(byAdding: .year, value: -60, to: Date()) ?? Date()
         self.regelaltersgrenze = RegelaltersgrenzenTabelle.regelaltersdatum(fuer: beispielGeburtsdatum)
         self.fruehesterAbschlagsfreierBeginn = RegelaltersgrenzenTabelle.fruehesterAbschlagsfreierBeginnDatum(fuer: beispielGeburtsdatum)
         self.abweichenderRentenbeginn = self.regelaltersgrenze
     }
 
-    // Methode zum Aktualisieren der Werte basierend auf Geburtsdatum
     func updateRentenParameter(geburtsdatum: Date) {
         let normGeburt = DateHelper.mitternachtStabil(fuer: geburtsdatum)
         let neueRegelaltersgrenze = RegelaltersgrenzenTabelle.regelaltersdatum(fuer: normGeburt)

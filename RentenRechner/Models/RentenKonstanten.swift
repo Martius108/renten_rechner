@@ -2,19 +2,16 @@
 //  RentenKonstanten.swift
 //  RentenRechner
 //
-//  Zeitlose Konstanten und Tabellen für die Rentenberechnung
 //
 
 import Foundation
 
 /// Zeitlose, gesetzlich definierte Konstanten (nicht jahresabhängig)
 struct RentenKonstanten {
-    // Abschläge
     static let abschlagProMonat: Double = 0.003
     static let maxAbschlagMonate: Int = 48
     static let maxAbschlag: Double = 0.144
 
-    // Mindestversicherungszeiten (Wartezeiten)
     static let mindestversicherungszeit: Int = 5
     static let mindestversicherungszeitLangjaehrig: Int = 35
     static let mindestversicherungszeitBesondersLangjaehrig: Int = 45
@@ -47,7 +44,7 @@ struct RegelaltersgrenzenTabelle {
         }
     }
 
-    /// DRV-konforme Sonderfälle für besonders langjährig Versicherte (45 Jahre)
+
     static func fruehesterAbschlagsfreierBeginn(fuer geburtsjahr: Int) -> (jahre: Int, monate: Int, fixJahr: Int?, fixMonat: Int?, fixTag: Int?) {
         switch geburtsjahr {
         case ...1952: return (63, 0, nil, nil, nil)

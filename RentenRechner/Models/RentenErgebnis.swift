@@ -2,7 +2,6 @@
 //  RentenErgebnis.swift
 //  RentenRechner
 //
-//  Datenmodell für Berechnungsergebnisse der Rentenberechnung
 //
 
 import Foundation
@@ -11,18 +10,15 @@ struct RentenErgebnis: Codable, Identifiable {
     var id: UUID = UUID()
     let berechnungsdatum: Date
     
-    // Grunddaten
     let regelaltersgrenze: Date
     let fruehesterAbschlagsfreierBeginn: Date
     let tatsaechlicherRentenbeginn: Date
     
-    // Rentenpunkte
     let aktuelleRentenpunkte: Double
     let zusaetzlicheRentenpunkte: Double
     let gesamtRentenpunkte: Double
     
-    // Rentenbeträge
-    let theoretischeBruttoRente: Double // Ohne Abschläge
+    let theoretischeBruttoRente: Double
     let abschlagProzent: Double
     let abschlagBetrag: Double
     let zuschlagProzent: Double
@@ -30,21 +26,16 @@ struct RentenErgebnis: Codable, Identifiable {
     let tatsaechlicheBruttoRente: Double
     let geschaetzteNettoRente: Double
     
-    // Neue Abzugsfelder
     let sozialabgabenBetrag: Double
     let steuerBetrag: Double
     let gesamtAbzuege: Double
     
-    // Zusatzinformationen
     let jahreVorRegelalter: Double
     let monateVorRegelalter: Int
     let verwendeterRentenwert: Double
 
-    // Transiente (nicht codierte) Referenz auf Settings
-    // Wichtig: Nicht in CodingKeys aufnehmen!
     var settings: AppSettings? = nil
 
-    // DEBUG: Transiente Diagnose-Felder (nicht codiert)
     var debugMonateBisRente: Int? = nil
     var debugJahreBisRente: Double? = nil
     var debugJahresbrutto: Double? = nil
@@ -54,7 +45,6 @@ struct RentenErgebnis: Codable, Identifiable {
     var debugEntgeltpunkteProJahr: Double? = nil
     var debugZusRP: Double? = nil
 
-    // Nur die codierbaren Keys angeben – settings und Debug-Felder sind absichtlich nicht dabei
     enum CodingKeys: String, CodingKey {
         case id, berechnungsdatum,
              regelaltersgrenze, fruehesterAbschlagsfreierBeginn, tatsaechlicherRentenbeginn,
@@ -84,10 +74,8 @@ struct RentenErgebnis: Codable, Identifiable {
         self.gesamtRentenpunkte = aktuelleRentenpunkte + zusaetzlicheRentenpunkte
         self.verwendeterRentenwert = verwendeterRentenwert
         
-        // Transient speichern (nicht codiert)
         self.settings = appSettings
         
-        // Gesetzliche Rente berechnen
         self.theoretischeBruttoRente = self.gesamtRentenpunkte * verwendeterRentenwert
         self.abschlagProzent = abschlagProzent
         self.abschlagBetrag = self.theoretischeBruttoRente * abschlagProzent
@@ -103,39 +91,28 @@ struct RentenErgebnis: Codable, Identifiable {
         self.zuschlagBetrag = self.theoretischeBruttoRente * self.zuschlagProzent
         self.tatsaechlicheBruttoRente = self.theoretischeBruttoRente - self.abschlagBetrag + self.zuschlagBetrag
         
-        // Für Berechnungen stets mit einem konkreten Settings-Objekt arbeiten
         let s = appSettings ?? AppSettings()
         
-        // 1. Sozialabgaben mit dynamischem DRV-Zuschuss:
-        //    - KV: hälftiger Anteil des allgemeinen KV-Satzes (DRV zahlt die andere Hälfte)
-        //    - Zusatzbeitrag: hälftiger Anteil (DRV beteiligt sich zur Hälfte)
-        //    - Pflegeversicherung: voller Anteil
         let kvHalb = s.krankenkassenBeitragssatz / 2.0
         let zusatzHalb = s.krankenkassenZusatzbeitrag / 2.0
         let sozialabgabenSatz = kvHalb + zusatzHalb + s.pflegeversicherungsBeitrag
         let sozialabgaben = self.tatsaechlicheBruttoRente * sozialabgabenSatz
         let renteNachSozialabgaben = self.tatsaechlicheBruttoRente - sozialabgaben
         
-        // 2. Steuerpflichtiger Anteil
         let steuerpflichtigerAnteil = renteNachSozialabgaben * s.steuerpflichtQuote
         
-        // 3. Steuerfreibetrag (monatlich)
         let monatlicheSteuerfreibetrag = s.steuerfreibetrag / 12.0
         let zuVersteuernderBetrag = max(0, steuerpflichtigerAnteil - monatlicheSteuerfreibetrag)
         
-        // 4. Steuer
         let steuerLast = zuVersteuernderBetrag * s.durchschnittlicherSteuersatz
         
-        // 5. Nettorente
         let nettoRenteDRV = renteNachSozialabgaben - steuerLast
         self.geschaetzteNettoRente = nettoRenteDRV
         
-        // 6. Abzüge separat speichern
         self.sozialabgabenBetrag = sozialabgaben
         self.steuerBetrag = steuerLast
         self.gesamtAbzuege = sozialabgaben + steuerLast
         
-        // Zeitdifferenz
         let calendar = Calendar.current
         let components = calendar.dateComponents([.month], from: tatsaechlicherRentenbeginn, to: regelaltersgrenze)
         self.monateVorRegelalter = max(0, components.month ?? 0)
@@ -209,7 +186,6 @@ extension RentenErgebnis {
         let f = DateFormatter()
         f.dateStyle = .long
         f.locale = Locale(identifier: "de_DE")
-        // Wenn Settings fehlen (z. B. nach Decoding), Jahr sinnvoll ableiten:
         let jahr = settings?.gueltigkeitsjahr ?? Calendar.current.component(.year, from: Date())
         
         var r = """

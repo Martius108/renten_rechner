@@ -2,13 +2,11 @@
 //  SettingsView.swift
 //  RentenRechner
 //
-//  Einstellungen für Änderungen der DRV
 //
 
 import SwiftUI
 import SwiftData
 
-// Kleiner Toast-View
 private struct SaveToast: View {
     var body: some View {
         HStack(spacing: 8) {
@@ -26,7 +24,6 @@ private struct SaveToast: View {
     }
 }
 
-// Keyboard-Dismiss Helper
 extension View {
     func hideKeyboard() {
         #if canImport(UIKit)
@@ -67,12 +64,10 @@ struct SettingsView: View {
             }
             .navigationTitle("Einstellungen")
             .navigationBarTitleDisplayMode(.large)
-            // Zusätzlicher "Fertig"-Button oben rechts, falls keine Tastatur sichtbar ist
             
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Fertig") {
-                        // Speichere nur, wenn ein Datensatz existiert
                         if !settings.isEmpty {
                             try? context.save()
                             hideKeyboard()
@@ -124,7 +119,6 @@ struct EditableSettingsContent: View {
             infoSection
         }
             .toolbar {
-                // "Fertig" innerhalb der Tastatur-Leiste
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("Fertig") { saveAndDismiss() }
@@ -133,7 +127,7 @@ struct EditableSettingsContent: View {
             }
     }
 
-    // MARK: - Sections
+
 
     private var rentenparameterSection: some View {
         Section("Aktuelle Rentenparameter") {
@@ -210,7 +204,7 @@ struct EditableSettingsContent: View {
         }
     }
 
-    // MARK: - Row-Builders
+
 
     private func numberField(title: String, suffix: String, binding: Binding<Double>, field: Field) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -234,17 +228,14 @@ struct EditableSettingsContent: View {
         .frame(minHeight: 44)
     }
 
-    // MARK: - Save
+
 
     private func saveAndDismiss() {
-        // Persistiere Änderungen am gebundenen AppSettings-Datensatz
         try? context.save()
 
-        // Fokus löschen und Tastatur schließen
         focusedField = nil
         hideKeyboard()
 
-        // Haptisches Feedback und Toast
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         onSaved()
     }

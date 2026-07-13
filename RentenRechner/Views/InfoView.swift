@@ -2,7 +2,6 @@
 //  InfoView.swift
 //  RentenRechner
 //
-//  Informationsseite mit rechtlichen Hinweisen und App-Informationen
 //
 
 import SwiftUI
@@ -35,7 +34,7 @@ struct InfoView: View {
                         zusatzrentenSection
                             .id(InfoSectionID.zusatzrenten)
                         
-                        grundrenteSection       // 🆕 NEUER ABSCHNITT
+                        grundrenteSection
                         
                         rechtlicheHinweiseSection
                         
@@ -61,12 +60,11 @@ struct InfoView: View {
         }
     }
     
-    // MARK: - App Info Section
+
     
     private var appInfoSection: some View {
         GroupBox {
             VStack(spacing: 16) {
-                // App Icon und Name
                 HStack {
                     Image(systemName: "eurosign.circle.fill")
                         .font(.system(size: 60))
@@ -91,7 +89,6 @@ struct InfoView: View {
                 
                 Divider()
                 
-                // Beschreibung
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Über diese App")
                         .font(.headline)
@@ -112,7 +109,7 @@ struct InfoView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - Berechnungsgrundlagen Section
+
     
     private var berechnungsgrundlagenSection: some View {
         GroupBox {
@@ -163,7 +160,7 @@ struct InfoView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - 45 Jahre Wartezeit Section
+
     
     private var wartezeit45JahreSection: some View {
         GroupBox {
@@ -173,7 +170,7 @@ struct InfoView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - Zusatzrenten Section
+
 
     private var zusatzrentenSection: some View {
         GroupBox {
@@ -205,7 +202,7 @@ struct InfoView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - Grundrente / Grundsicherung Section (🆕)
+
     
     private var grundrenteSection: some View {
         GroupBox {
@@ -239,7 +236,7 @@ struct InfoView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - Rechtliche Hinweise Section
+
     
     private var rechtlicheHinweiseSection: some View {
         GroupBox {
@@ -289,7 +286,7 @@ struct InfoView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - Kontakt Section
+
     
     private var kontaktSection: some View {
         GroupBox {
@@ -316,7 +313,7 @@ struct InfoView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
     
-    // MARK: - Impressum Section
+
     
     private var impressumSection: some View {
         GroupBox {

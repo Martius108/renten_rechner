@@ -2,7 +2,6 @@
 //  ContentView.swift
 //  RentenRechner
 //
-//  Haupt-Tab-View der Renten-App
 //
 
 import SwiftUI

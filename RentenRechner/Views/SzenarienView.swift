@@ -2,7 +2,6 @@
 //  SzenarienView.swift
 //  RentenRechner
 //
-//  Vergleich verschiedener Rentenbeginn-Szenarien
 //
 
 import SwiftUI
@@ -67,7 +66,7 @@ struct SzenarienView: View {
         }
     }
 
-    // MARK: - Header Section
+
 
     private var headerSection: some View {
         GroupBox {
@@ -93,7 +92,7 @@ struct SzenarienView: View {
         .groupBoxStyle(CardGroupBoxStyle())
     }
 
-    // MARK: - Vergleichs Section
+
 
     private var vergleichsSection: some View {
         GroupBox {
@@ -133,14 +132,12 @@ struct SzenarioCard: View {
     let szenario: RentenSzenario
     let rank: Int
 
-    // Optionale Parameter für individuellen Titel und Zusatzinfo
     var customTitle: String? = nil
     var additionalInfo: String? = nil
 
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 16) {
-                // Header mit Rang und Empfehlung
                 HStack {
                     HStack(spacing: 8) {
                         Text("#\(rank)")
@@ -160,7 +157,6 @@ struct SzenarioCard: View {
                     Spacer()
                 }
 
-                // Beschreibung oder Zusatzinfo anzeigen
                 if customTitle == "Aktuelle Berechnung", let info = additionalInfo {
                     Text(info)
                         .font(.caption)
@@ -173,7 +169,6 @@ struct SzenarioCard: View {
                         .multilineTextAlignment(.leading)
                 }
 
-                // Hauptergebnis
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Monatliche Rente (gesetzlich)")
                         .font(.caption)
@@ -186,7 +181,6 @@ struct SzenarioCard: View {
 
                 }
 
-                // Rentenbeginn
                 HStack {
                     VStack(alignment: .leading) {
                         Text("Rentenbeginn")
@@ -234,7 +228,6 @@ struct SzenarioDetailView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Header
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Text(szenario.empfehlung.symbol)
@@ -254,7 +247,6 @@ struct SzenarioDetailView: View {
                         Divider()
                     }
 
-                    // Hauptergebnis
                     GroupBox {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Ergebnis")

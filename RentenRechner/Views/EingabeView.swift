@@ -2,7 +2,6 @@
 //  EingabeView.swift
 //  RentenRechner
 //
-//  Eingabe aller benötigten Daten
 //
 
 import SwiftUI
@@ -33,6 +32,7 @@ struct EingabeView: View {
                             hatUserRentenbeginnGeaendert: $hatUserRentenbeginnGeaendert,
                             isInitialLoad: $isInitialLoad,
                             isProgrammaticChange: $isProgrammaticChange,
+                            savePersonData: savePersonData,
                             saveAppSettings: saveAppSettings
                         )
                         BerechnungsgrundlagenSection(viewModel: viewModel)
@@ -106,10 +106,14 @@ struct EingabeView: View {
             }
             .onChange(of: viewModel.person.monatlichesEinkommen) { _, _ in savePersonData() }
             .onChange(of: viewModel.person.aktuelleRentenpunkte) { _, _ in savePersonData() }
+            .onChange(of: viewModel.person.rentenpunkteStand) { _, newValue in
+                viewModel.person.rentenpunkteStand = DateHelper.mitternachtStabil(fuer: newValue)
+                savePersonData()
+            }
         }
     }
     
-    // MARK: - Lifecycle
+
 
     private func onAppear() {
         let hatteGespeichertePerson = persons.first != nil
@@ -149,7 +153,7 @@ struct EingabeView: View {
         }
     }
     
-    // MARK: - Save Helpers
+
     
     private func savePersonData() {
         viewModel.person.geburtsdatum = DateHelper.mitternachtStabil(fuer: viewModel.person.geburtsdatum)
@@ -182,6 +186,7 @@ struct RentenoptionenSection: View {
     @Binding var hatUserRentenbeginnGeaendert: Bool
     @Binding var isInitialLoad: Bool
     @Binding var isProgrammaticChange: Bool
+    let savePersonData: () -> Void
     let saveAppSettings: () -> Void
     
     var body: some View {
@@ -215,6 +220,21 @@ struct RentenoptionenSection: View {
                             isProgrammaticChange = false
                         }
                     }
+
+                Button {
+                    viewModel.person.erfuelltWartezeit45Jahre.toggle()
+                    savePersonData()
+                } label: {
+                    Label(
+                        "45 Versicherungsjahre erfüllt",
+                        systemImage: viewModel.person.erfuelltWartezeit45Jahre ? "checkmark.square.fill" : "square"
+                    )
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(viewModel.person.erfuelltWartezeit45Jahre ? .blue : .primary)
+                .accessibilityValue(viewModel.person.erfuelltWartezeit45Jahre ? "Ja" : "Nein")
+
+                InfoText("Nur aktivieren, wenn die 45-jährige Wartezeit erfüllt ist. Dann entfällt der Abschlag frühestens ab dem dafür geltenden Rentenbeginn.")
                 
                 if hatUserRentenbeginnGeaendert {
                     VStack(alignment: .leading, spacing: 8) {
@@ -246,7 +266,6 @@ struct RentenoptionenSection: View {
                             ErrorText(fehler)
                         }
                         
-                        // Zusatzinformationen zum abschlagsfreien Beginn
                         ZusatzinformationenAbschlagsfrei(gewählterBeginn: rentenbeginnUI, viewModel: viewModel)
                     }
                 } else {
@@ -457,6 +476,14 @@ struct BeruflicheDatenSection: View {
                     } else {
                         InfoText("Aus Ihrem aktuellen Rentenbescheid")
                     }
+
+                    DatePicker(
+                        "Stand der Rentenpunkte",
+                        selection: $viewModel.person.rentenpunkteStand,
+                        in: ...Date(),
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.compact)
                 }
                 
             }
@@ -495,6 +522,7 @@ struct BerechnungsgrundlagenSection: View {
                 )
                 
                 InfoText("Diese Werte gelten für \(settings.gueltigkeitsjahrText). Der Rentenwert ist ab 01.07.2026 hinterlegt und sollte nach endgültiger Verabschiedung geprüft werden.")
+                InfoText("Die App rechnet mit vereinfachten Annahmen und Ihren Eingaben. Ergebnisse können von einer Auskunft der Deutschen Rentenversicherung abweichen.")
             }
             .padding()
         }

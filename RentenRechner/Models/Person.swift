@@ -2,7 +2,6 @@
 //  Person.swift
 //  RentenRechner
 //
-//  Datenmodell für Personendaten zur Rentenberechnung
 //
 
 import Foundation
@@ -12,13 +11,13 @@ import SwiftData
 class Person {
     var id: UUID
 
-    // Private Backing-Property für Datumsnormalisierung
     private var _geburtsdatum: Date
     
     var monatlichesEinkommen: Double
     var aktuelleRentenpunkte: Double
+    var rentenpunkteStand: Date = Date()
+    var erfuelltWartezeit45Jahre: Bool = false
     
-    // Computed Properties mit automatischer Normalisierung (Mitternacht Europe/Berlin)
     var geburtsdatum: Date {
         get {
             return DateHelper.mitternachtStabil(fuer: _geburtsdatum)
@@ -28,7 +27,6 @@ class Person {
         }
     }
     
-    // Init ohne gewuenschterRentenbeginn
     init() {
         self.id = UUID()
         let defaultDate = DateHelper.stableCalendar.date(from: DateComponents(year: 1970, month: 1, day: 1)) ?? Date()
@@ -40,15 +38,19 @@ class Person {
     init(
         geburtsdatum: Date = DateHelper.stableCalendar.date(from: DateComponents(year: 1970, month: 1, day: 1)) ?? Date(),
         monatlichesEinkommen: Double = 0.0,
-        aktuelleRentenpunkte: Double = 0.0
+        aktuelleRentenpunkte: Double = 0.0,
+        rentenpunkteStand: Date = Date(),
+        erfuelltWartezeit45Jahre: Bool = false
     ) {
         self.id = UUID()
         self._geburtsdatum = DateHelper.mitternachtStabil(fuer: geburtsdatum)
         self.monatlichesEinkommen = monatlichesEinkommen
         self.aktuelleRentenpunkte = aktuelleRentenpunkte
+        self.rentenpunkteStand = DateHelper.mitternachtStabil(fuer: rentenpunkteStand)
+        self.erfuelltWartezeit45Jahre = erfuelltWartezeit45Jahre
     }
     
-    // MARK: - Computed Properties
+
     
     var alter: Int {
         let cal = DateHelper.stableCalendar

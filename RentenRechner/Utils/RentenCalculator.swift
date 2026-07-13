@@ -2,47 +2,43 @@
 //  RentenCalculator.swift
 //  RentenRechner
 //
-//  Hauptberechnungslogik für deutsche Rentenberechnung
 //
 
 import Foundation
 
 class RentenCalculator {
     
-    // MARK: - Properties
+
     
-    /// AppSettings für alle Berechnungen (Rentenwerte, Steuer- und Sozialabgaben)
+
     var appSettings: AppSettings
     
-    // MARK: - Initializer
+
     
     init(appSettings: AppSettings? = nil) {
         self.appSettings = appSettings ?? AppSettings()
     }
     
-    // MARK: - Hauptberechnung
+
     
-    /// Berechnet die Rente für eine Person basierend auf den eingegebenen Daten
-    /// - Parameters:
-    ///   - person: Die Person mit allen Eingabedaten
-    ///   - appSettings: Optionale AppSettings für Steuer- und Sozialabgaben (überschreibt Instanz-Settings)
-    /// - Returns: Detailliertes Berechnungsergebnis
+
+
+
+
+
     func berechneRente(
         fuer person: Person,
         appSettings: AppSettings? = nil
     ) -> RentenErgebnis {
         
-        // 1. Validierung
         guard person.isValid else {
             return RentenErgebnis.empty(for: person, appSettings: appSettings ?? self.appSettings)
         }
         
-        // 2. Regelaltersgrenze und frühester abschlagsfreier Beginn aus AppSettings
         let s = appSettings ?? self.appSettings
         let regelaltersgrenze = s.regelaltersgrenze
         let fruehesterAbschlagsfreierBeginn = s.fruehesterAbschlagsfreierBeginn
         
-        // Normiere auf Monatsanfang
         guard let gewuenschterRentenbeginn = s.abweichenderRentenbeginn else {
             return RentenErgebnis.empty(for: person, appSettings: s)
         }
@@ -51,12 +47,14 @@ class RentenCalculator {
             ab: DateHelper.mitternachtStabil(fuer: gewuenschterRentenbeginn)
         )
         
-        // 4. Berechne Monate/Jahre bis Rentenbeginn
-        let heute = DateHelper.ersterTagDesMonats(fuer: DateHelper.mitternachtStabil(fuer: Date()))
-        let monateBisRente = max(0, DateHelper.monateZwischen(startDatum: heute, endDatum: tatsaechlicherRentenbeginn, includeCurrentPartialMonth: true))
+        let standMonat = DateHelper.ersterTagDesMonats(fuer: person.rentenpunkteStand)
+        let beitragsbeginn = DateHelper.stableCalendar.date(byAdding: .month, value: 1, to: standMonat) ?? standMonat
+        let monateBisRente = max(0, DateHelper.monateZwischen(
+            startDatum: beitragsbeginn,
+            endDatum: tatsaechlicherRentenbeginn
+        ))
         let jahreBisRente = Double(monateBisRente) / 12.0
         
-        // 5. Zusatz-EP mit aktuellen Zeitwerten
         let zusRes = berechneZusaetzlicheRentenpunkteMitFestenZeitwerten(
             fuer: person,
             monate: monateBisRente,
@@ -64,14 +62,13 @@ class RentenCalculator {
             settings: s
         )
         
-        // 6. Abschlag
         let abschlagProzent = berechneAbschlag(
             gewuenschterBeginn: tatsaechlicherRentenbeginn,
             regelaltersgrenze: regelaltersgrenze,
-            fruehesterAbschlagsfreierBeginn: fruehesterAbschlagsfreierBeginn
+            fruehesterAbschlagsfreierBeginn: fruehesterAbschlagsfreierBeginn,
+            erfuelltWartezeit45Jahre: person.erfuelltWartezeit45Jahre
         )
         
-        // 7. Ergebnis
         var result = RentenErgebnis(
             person: person,
             regelaltersgrenze: regelaltersgrenze,
@@ -84,7 +81,6 @@ class RentenCalculator {
             appSettings: s
         )
         
-        // 8. Debug
         result.debugMonateBisRente = zusRes.monateBisRente
         result.debugJahreBisRente = zusRes.jahreBisRente
         result.debugJahresbrutto = zusRes.jahresbrutto
@@ -97,19 +93,18 @@ class RentenCalculator {
         return result
     }
     
-    // MARK: - Rentenpunkte Berechnungen
+
     
-    /// Berechnet Rentenpunkte pro Jahr aus dem Jahresbruttoeinkommen
-    /// Formel: Entgeltpunkte = Jahreseinkommen / Durchschnittsentgelt (aktuelles Jahr)
-    /// - Parameters:
-    ///   - jahreseinkommen: Jahresbruttoeinkommen
-    ///   - settings: Optionale AppSettings (nutzt Instanz-Settings wenn nicht angegeben)
-    /// - Returns: Rentenpunkte pro Jahr
+
+
+
+
+
+
     func berechneRentenpunkteProJahr(jahreseinkommen: Double, settings: AppSettings? = nil) -> Double {
         let s = settings ?? self.appSettings
         guard s.durchschnittsentgelt > 0 else { return 0 }
         
-        // Berücksichtige Beitragsbemessungsgrenze
         let bbgJahr = s.beitragsbemessungsgrenze
         let cappedEinkommen = min(jahreseinkommen, bbgJahr)
         
@@ -156,18 +151,19 @@ class RentenCalculator {
         )
     }
     
-    // MARK: - Abschlag Berechnungen
+
     
     private func berechneAbschlag(
         gewuenschterBeginn: Date,
         regelaltersgrenze: Date,
-        fruehesterAbschlagsfreierBeginn: Date
+        fruehesterAbschlagsfreierBeginn: Date,
+        erfuelltWartezeit45Jahre: Bool
     ) -> Double {
         
         guard gewuenschterBeginn < regelaltersgrenze else {
             return 0.0
         }
-        if gewuenschterBeginn >= fruehesterAbschlagsfreierBeginn {
+        if erfuelltWartezeit45Jahre && gewuenschterBeginn >= fruehesterAbschlagsfreierBeginn {
             return 0.0
         }
         
@@ -181,7 +177,7 @@ class RentenCalculator {
         return min(abschlag, RentenKonstanten.maxAbschlag)
     }
     
-    // MARK: - Szenario Berechnungen
+
     
     func berechneSzenarien(fuer person: Person) -> [RentenSzenario] {
         var szenarien: [RentenSzenario] = []
@@ -221,7 +217,6 @@ class RentenCalculator {
             ))
         }
         
-        // Szenario 1: aktuelle Nutzer-Auswahl
         szenarioHinzufuegen(
             name: "Aktuelle Auswahl",
             beschreibung: "Der aktuell gewählte Rentenbeginn",
@@ -229,7 +224,6 @@ class RentenCalculator {
             empfehlung: .neutral
         )
         
-        // Vergleich: Regelaltersgrenze
         szenarioHinzufuegen(
             name: "Regelaltersgrenze",
             beschreibung: "Pünktlich zur gesetzlichen Regelaltersgrenze",
@@ -237,7 +231,6 @@ class RentenCalculator {
             empfehlung: .neutral
         )
         
-        // Vergleich: Frühester abschlagsfreier Beginn (45 Jahre)
         if fruehesterAbschlagsfreierBeginn < regelaltersgrenze {
             szenarioHinzufuegen(
                 name: "Früher möglich (45 Jahre)",
@@ -247,7 +240,6 @@ class RentenCalculator {
             )
         }
         
-        // Vergleich: Mit 63 Jahren (falls möglich)
         if let alter63 = DateHelper.addiere(jahre: 63, zu: normGeburt) {
             if alter63 > DateHelper.mitternachtStabil(fuer: Date()) {
                 szenarioHinzufuegen(
@@ -259,7 +251,6 @@ class RentenCalculator {
             }
         }
         
-        // Vergleich: Ein Jahr nach Regelaltersgrenze
         if let einJahrSpaeter = DateHelper.addiere(jahre: 1, zu: regelaltersgrenze) {
             szenarioHinzufuegen(
                 name: "Ein Jahr später",
@@ -272,7 +263,7 @@ class RentenCalculator {
         return szenarien
     }
     
-    // MARK: - Hilfsfunktionen
+
     
     func validiereRentenbeginn(datum: Date, geburtsdatum: Date) -> RentenbeginnValidierung {
         let cal = DateHelper.stableCalendar

@@ -2,25 +2,23 @@
 //  DateHelper.swift
 //  RentenRechner
 //
-//  Hilfsfunktionen für Datumsberechnungen in der Renten-App
 //
 
 import Foundation
 
 class DateHelper {
 
-    // MARK: - Stabiler Kalender (feste deutsche Zeitzone)
-    // Wir nutzen einen festen gregorianischen Kalender mit deutscher Locale und Zeitzone
+
     static var stableCalendar: Calendar = {
         var cal = Calendar(identifier: .gregorian)
         cal.locale = Locale(identifier: "de_DE")
-        cal.timeZone = TimeZone(identifier: "Europe/Berlin")! // Deutsche Zeitzone
+        cal.timeZone = TimeZone(identifier: "Europe/Berlin")!
         return cal
     }()
 
-    // MARK: - Formatierung
 
-    /// Standard-Datumsformatter für deutsche Lokalisierung
+
+
     static let germanDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "de_DE")
@@ -30,7 +28,7 @@ class DateHelper {
         return formatter
     }()
 
-    /// Langer Datumsformatter für ausführliche Darstellung
+
     static let longGermanDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "de_DE")
@@ -40,7 +38,7 @@ class DateHelper {
         return formatter
     }()
 
-    /// Monats-Jahr Formatter
+
     static let monthYearFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "de_DE")
@@ -49,7 +47,7 @@ class DateHelper {
         return formatter
     }()
 
-    /// Jahr Formatter
+
     static let yearFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "de_DE")
@@ -58,19 +56,19 @@ class DateHelper {
         return formatter
     }()
 
-    // MARK: - Datums-Normalisierung
 
-    /// Normalisiert ein Datum auf Mitternacht (00:00) in deutscher Zeitzone
-    /// Verhindert Tages-Drift durch Zeitzonen-Konvertierung
-    /// - Parameter datum: Zu normalisierendes Datum
-    /// - Returns: Datum auf Mitternacht normalisiert (Jahr, Monat, Tag bleiben erhalten)
+
+
+
+
+
     static func mitternachtStabil(fuer datum: Date) -> Date {
         let cal = stableCalendar
         let comps = cal.dateComponents([.year, .month, .day], from: datum)
         return cal.date(from: comps) ?? datum
     }
 
-    // MARK: - Altersberechnungen
+
 
     static func berechneAlter(geburtsdatum: Date) -> Int {
         let cal = stableCalendar
@@ -96,9 +94,9 @@ class DateHelper {
         return (jahre: components.year ?? 0, monate: components.month ?? 0)
     }
 
-    // MARK: - Zeitspannen-Berechnungen
 
-    /// Schnappt ein Datum auf den Monatsanfang (00:00 deutsche Zeit)
+
+
     static func ersterTagDesMonats(fuer datum: Date) -> Date {
         let cal = stableCalendar
         let normalized = mitternachtStabil(fuer: datum)
@@ -106,7 +104,7 @@ class DateHelper {
         return cal.date(from: comps) ?? normalized
     }
 
-    /// Nimmt den 1. des nächsten Monats, außer wenn bereits der 1., dann unverändert
+
     static func naechsterMonatserster(ab datum: Date) -> Date {
         let cal = stableCalendar
         let normalized = mitternachtStabil(fuer: datum)
@@ -119,7 +117,7 @@ class DateHelper {
         }
     }
 
-    /// Letzter Tag des Monats
+
     static func letzterTagDesMonats(fuer datum: Date) -> Date {
         let cal = stableCalendar
         let normalized = mitternachtStabil(fuer: datum)
@@ -128,12 +126,12 @@ class DateHelper {
         return cal.date(byAdding: .day, value: -1, to: nextMonth)!
     }
 
-    /// Robuste Monatsdifferenz in vollen Monaten.
-    /// Beide Daten werden auf Monatsanfang gesnappt, dann Year*12 + Month gerechnet.
-    /// - Parameters:
-    ///   - startDatum: Startdatum
-    ///   - endDatum: Enddatum
-    ///   - includeCurrentPartialMonth: Wenn true, wird ab dem nächsten Monat gezählt
+
+
+
+
+
+
     static func monateZwischen(startDatum: Date, endDatum: Date, includeCurrentPartialMonth: Bool = false) -> Int {
         let cal = stableCalendar
         let startNorm = mitternachtStabil(fuer: startDatum)
@@ -143,7 +141,6 @@ class DateHelper {
         let end = ersterTagDesMonats(fuer: endNorm)
 
         if includeCurrentPartialMonth {
-            // ab nächstem Monat zählen
             start = cal.date(byAdding: .month, value: 1, to: start) ?? start
         }
 
@@ -163,7 +160,7 @@ class DateHelper {
         return Double(monate) / 12.0
     }
 
-    /// Arbeitstage (Werktage Mo–Fr)
+
     static func arbeitstagezwischen(startDatum: Date, endDatum: Date) -> Int {
         let cal = stableCalendar
         var arbeitstage = 0
@@ -172,7 +169,6 @@ class DateHelper {
 
         while currentDate <= end {
             let weekday = cal.component(.weekday, from: currentDate)
-            // Montag = 2, Freitag = 6
             if weekday >= 2 && weekday <= 6 {
                 arbeitstage += 1
             }
@@ -182,7 +178,7 @@ class DateHelper {
         return arbeitstage
     }
 
-    // MARK: - Datums-Manipulationen
+
 
     static func addiere(jahre: Int, zu datum: Date) -> Date? {
         let normalized = mitternachtStabil(fuer: datum)
@@ -211,7 +207,7 @@ class DateHelper {
         return stableCalendar.date(from: comps)
     }
 
-    // MARK: - Validierungen
+
 
     static func istInVergangenheit(_ datum: Date) -> Bool {
         let normalized = mitternachtStabil(fuer: datum)
@@ -241,7 +237,7 @@ class DateHelper {
         return geburt >= jahr1920 && geburt <= vor18Jahren
     }
 
-    // MARK: - Rentenbeginn-Optionen
+
 
     static func rentenbeginnOptionen(ab startDatum: Date = Date()) -> [Date] {
         let cal = stableCalendar
@@ -257,7 +253,7 @@ class DateHelper {
         return optionen
     }
 
-    // MARK: - Formatierte Ausgaben
+
 
     static func relativerZeitString(fuer datum: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
@@ -317,7 +313,7 @@ extension Date {
 }
 
 extension Calendar {
-    /// Deutsche Kalenderkonfiguration
+
     static let deutsch: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = Locale(identifier: "de_DE")

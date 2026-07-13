@@ -89,6 +89,46 @@ final class RentenCalculatorTests: XCTestCase {
         )
     }
 
+    func testRentenpunkteStandUndAbschlagFuer35Versicherungsjahre() throws {
+        let settings = AppSettings()
+        settings.regelaltersgrenze = try XCTUnwrap(DateHelper.erstelleDatum(jahr: 2030, monat: 7, tag: 1))
+        settings.fruehesterAbschlagsfreierBeginn = try XCTUnwrap(DateHelper.erstelleDatum(jahr: 2028, monat: 7, tag: 1))
+        settings.abweichenderRentenbeginn = try XCTUnwrap(DateHelper.erstelleDatum(jahr: 2028, monat: 7, tag: 1))
+
+        let person = Person(
+            geburtsdatum: try XCTUnwrap(DateHelper.erstelleDatum(jahr: 1963, monat: 9, tag: 1)),
+            monatlichesEinkommen: 3_000,
+            aktuelleRentenpunkte: 31.4343,
+            rentenpunkteStand: try XCTUnwrap(DateHelper.erstelleDatum(jahr: 2025, monat: 12, tag: 31))
+        )
+
+        let ergebnis = RentenCalculator(appSettings: settings).berechneRente(fuer: person)
+
+        XCTAssertEqual(ergebnis.zusaetzlicheRentenpunkte, 90_000 / 51_944, accuracy: 0.000_001)
+        XCTAssertEqual(ergebnis.abschlagProzent, 0.072, accuracy: 0.000_001)
+        XCTAssertEqual(ergebnis.tatsaechlicheBruttoRente, 1_308.72, accuracy: 0.01)
+    }
+
+    func testBestaetigte45JahreSindErstAbGesetzlichemTerminAbschlagsfrei() throws {
+        let settings = AppSettings()
+        settings.regelaltersgrenze = try XCTUnwrap(DateHelper.erstelleDatum(jahr: 2030, monat: 7, tag: 1))
+        settings.fruehesterAbschlagsfreierBeginn = try XCTUnwrap(DateHelper.erstelleDatum(jahr: 2028, monat: 7, tag: 1))
+        settings.abweichenderRentenbeginn = try XCTUnwrap(DateHelper.erstelleDatum(jahr: 2028, monat: 7, tag: 1))
+
+        let person = Person(
+            geburtsdatum: try XCTUnwrap(DateHelper.erstelleDatum(jahr: 1963, monat: 9, tag: 1)),
+            aktuelleRentenpunkte: 31.4343,
+            rentenpunkteStand: try XCTUnwrap(DateHelper.erstelleDatum(jahr: 2025, monat: 12, tag: 31)),
+            erfuelltWartezeit45Jahre: true
+        )
+
+        let calculator = RentenCalculator(appSettings: settings)
+        XCTAssertEqual(calculator.berechneRente(fuer: person).abschlagProzent, 0, accuracy: 0.000_001)
+
+        settings.abweichenderRentenbeginn = try XCTUnwrap(DateHelper.erstelleDatum(jahr: 2028, monat: 6, tag: 1))
+        XCTAssertGreaterThan(calculator.berechneRente(fuer: person).abschlagProzent, 0)
+    }
+
     func testFruehesterAbschlagsfreierBeginnFuerJahrgang1963IstGeburtstagsabhaengig() throws {
         let geburtsdatum = try XCTUnwrap(DateHelper.erstelleDatum(jahr: 1963, monat: 7, tag: 20))
 
